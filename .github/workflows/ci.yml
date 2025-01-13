@@ -23,9 +23,20 @@ jobs:
         run: pip install conan
       - name: Build project
         run: python3 build.py Release
+      - name: Install Vulkan SDK (Windows only)
+        if: runner.os == 'Windows'
+        uses: humbletim/setup-vulkan-sdk@v1.2.0
+        with:
+          vulkan-query-version: 1.3.204.0
+          vulkan-components: Vulkan-Headers, Vulkan-Loader
+          vulkan-use-cache: true
+      - name: Check Vulkan DLL Presence
+        run: |
+          if not exist "%VULKAN_SDK%\\bin\\vulkan-1.dll" (
+            echo "vulkan-1.dll is missing"
+            exit 1
+          ) else (
+            echo "vulkan-1.dll is present"
+          )
       - name: Test project
         run: ctest -C Release
-        continue-on-error: true
-      - name: Display errors
-        if: runner.os == 'Windows'
-        run: cat "D:/a/Engine/Engine/Testing/Temporary/LastTest.log"
