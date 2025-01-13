@@ -21,7 +21,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install Vulkan SDK (Windows only)
         if: runner.os == 'Windows'
-        run: choco install vulkan-sdk
+        uses: humbletim/setup-vulkan-sdk@v1.2.0
+        with:
+          vulkan-query-version: 1.3.204.0
+          vulkan-components: Vulkan-Headers, Vulkan-Loader
+          vulkan-use-cache: true
       - name: Install conan
         run: pip install conan
       - name: Build project
