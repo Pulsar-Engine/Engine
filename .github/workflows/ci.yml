@@ -6,7 +6,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [windows-latest, ubuntu-latest]
         python-version: ["3.10"]
         cmake-version: ["3.26.0"]
     steps:
@@ -24,6 +24,7 @@ jobs:
       - name: Build project
         run: python3 build.py Release
       - name: Run test program
+        if: runner.os == 'Windows'
         run: .\build\pulsar-engine-test.exe
       - name: Test project
         run: ctest -C Release
