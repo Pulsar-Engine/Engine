@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up CMake
-        uses: lukka/setup-cmake@v3
+        uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: ${{ matrix.cmake-version }}
       - name: Set up Python ${{ matrix.python-version }}
