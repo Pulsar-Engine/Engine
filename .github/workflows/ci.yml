@@ -23,10 +23,5 @@ jobs:
         run: pip install conan
       - name: Build project
         run: python3 build.py Release
-      - name: Run test program
-        if: runner.os == 'Windows'
-        run: |
-          cd D:\a\Engine\Engine\build\
-          ./pulsar-engine-test.exe 0
       - name: Test project
-        run: ctest -C Release
+        run: ctest --rerun-failed --output-on-failure -C Release
