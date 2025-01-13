@@ -19,12 +19,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install Visual C++ Redistributables (Windows)
-        if: runner.os == 'Windows'
-        run: choco install vcredist-all -y
       - name: Install conan
         run: pip install conan
       - name: Build project
         run: python3 build.py Release
+      - name: Check DLL
+        run: |
+          curl -L -o checkdll.exe https://github.com/gkv311/checkdll/releases/download/v17_02/checkDLL64.exe
+          ./checkdll.exe "D:\a\Engine\Engine\build\pulsar-engine-test.exe"
       - name: Test project
         run: ctest -C Release
