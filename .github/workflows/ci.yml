@@ -23,6 +23,9 @@ jobs:
         run: pip install conan
       - name: Build project
         run: python3 build.py Release
+      - name: Install .NET SDK on Windows
+        run: |
+          choco install dotnet-sdk --version 6.0.100
       - name: Download Dependency Walker
         if: runner.os == 'Windows'
         run: |
