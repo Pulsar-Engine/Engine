@@ -1,0 +1,27 @@
+name: ci
+run-name: CI - Engine
+on: [push, pull_request]
+jobs:
+  build-and-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.10"]
+        cmake-version: ["3.26.0"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up CMake
+        uses: lukka/setup-cmake@v3
+        with:
+          cmake-version: ${{ matrix.cmake-version }}
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install conan
+        run: pip install conan
+      - name: Build project
+        run: python3 build.py Release
+      - name: Test project
+        run: ctest -C Release
