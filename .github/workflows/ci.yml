@@ -30,16 +30,14 @@ jobs:
       - name: Download Dependency Walker
         if: runner.os == 'Windows'
         run: |
-          curl -L -o depends.zip https://github.com/lucasg/Dependencies/releases/download/v1.11.1/Dependencies_x64_Release.zip
-          unzip depends.zip -d depends
-          mv depends/Dependencies.exe ./depends.exe
+          curl -L -o release.zip https://github.com/Ex-Origin/ldd-win/releases/download/2.0/release.zip
+          unzip release.zip -d ldd
+          mv ldd/ldd.exe ./ldd.exe
       - name: Install libs
         if: runner.os == 'Windows'
         run: dotnet add package ClrPhlib --version 1.10.7968.33601
-      - name: Check missing DLLs with Dependency Walker
+      - name: Check missing DLLs
         if: runner.os == 'Windows'
-        run: |
-          ./depends.exe /c "D:\a\Engine\Engine\build\pulsar-engine-test.exe" > missing_dlls.txt
-          cat missing_dlls.txt
+        run: ./ldd.exe "D:\a\Engine\Engine\build\pulsar-engine-test.exe"
       - name: Test project
         run: ctest -C Release
