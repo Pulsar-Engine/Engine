@@ -33,6 +33,9 @@ jobs:
           curl -L -o depends.zip https://github.com/lucasg/Dependencies/releases/download/v1.11.1/Dependencies_x64_Release.zip
           unzip depends.zip -d depends
           mv depends/Dependencies.exe ./depends.exe
+      - name: Install libs
+        if: runner.os == 'Windows'
+        run: dotnet add package ClrPhlib --version 1.10.7968.33601
       - name: Check missing DLLs with Dependency Walker
         if: runner.os == 'Windows'
         run: |
