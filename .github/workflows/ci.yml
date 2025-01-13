@@ -24,6 +24,7 @@ jobs:
       - name: Build project
         run: python3 build.py Release
       - name: Check DLL
+        if: runner.os == 'Windows'
         run: |
           curl -L -o checkdll.exe https://github.com/gkv311/checkdll/releases/download/v17_02/checkDLL64.exe
           ./checkdll.exe "D:\a\Engine\Engine\build\pulsar-engine-test.exe"
