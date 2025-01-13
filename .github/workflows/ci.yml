@@ -27,4 +27,5 @@ jobs:
         run: ctest -C Release
         continue-on-error: true
       - name: Display errors
+        if: runner.os == 'Windows'
         run: cat "D:/a/Engine/Engine/Testing/Temporary/LastTest.log"
