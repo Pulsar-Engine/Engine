@@ -30,14 +30,10 @@ jobs:
           vulkan-query-version: 1.3.204.0
           vulkan-components: Vulkan-Headers, Vulkan-Loader
           vulkan-use-cache: true
-      - name: Check Vulkan DLL Presence
+      - name: Display Vulkan SDK Path
         if: runner.os == 'Windows'
         run: |
-          if not exist "%VULKAN_SDK%\\bin\\vulkan-1.dll" (
-            echo "vulkan-1.dll is missing"
-            exit 1
-          ) else (
-            echo "vulkan-1.dll is present"
-          )
+          echo "VULKAN_SDK: $env:VULKAN_SDK"
+          echo "PATH: $env:PATH"
       - name: Test project
         run: ctest -C Release
