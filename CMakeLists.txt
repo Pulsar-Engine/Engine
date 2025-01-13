@@ -31,15 +31,12 @@ target_link_libraries(pulsar-engine PUBLIC Vulkan::Vulkan glfw)
 
 enable_testing()
 
-if (WIN32)
-    set(NO_CONSOLE WIN32)
-endif()
 
 FILE(GLOB_RECURSE TEST_SRC ./test/*.cpp)
 
-add_compile_options(NO_CONSOLE)
 add_executable(pulsar-engine-test ${TEST_SRC})
-target_include_directories(pulsar-engine-test PRIVATE ./test PRIVATE ./src)
+target_include_directories(pulsar-engine-test PRIVATE ./test PRIVATE ./src PRIVATE ${glfw3_INCLUDE_DIRS} ${Vulkan_INCLUDE_DIRS} ${glm_INCLUDE_DIRS})
 target_link_libraries(pulsar-engine-test PRIVATE pulsar-engine Vulkan::Vulkan glfw)
 
 #TODO add some tests
+add_test(NAME simple-vulkan-window COMMAND pulsar-engine-test 0)
