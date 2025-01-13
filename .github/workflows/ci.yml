@@ -23,10 +23,16 @@ jobs:
         run: pip install conan
       - name: Build project
         run: python3 build.py Release
-      - name: Check DLL
+      - name: Download Dependency Walker
         if: runner.os == 'Windows'
         run: |
-          curl -L -o checkdll.exe https://github.com/gkv311/checkdll/releases/download/v17_02/checkDLL64.exe
-          ./checkdll.exe "D:\a\Engine\Engine\build\pulsar-engine-test.exe"
+          curl -L -o depends.zip https://github.com/lucasg/Dependencies/releases/download/v1.11/Dependencies-v1.11.zip
+          unzip depends.zip -d depends
+          mv depends/depends.exe ./depends.exe
+      - name: Check missing DLLs with Dependency Walker
+        if: runner.os == 'Windows'
+        run: |
+          ./depends.exe /c "D:\a\Engine\Engine\build\pulsar-engine-test.exe" > missing_dlls.txt
+          cat missing_dlls.txt
       - name: Test project
         run: ctest -C Release
