@@ -26,7 +26,7 @@ jobs:
       - name: Download Dependency Walker
         if: runner.os == 'Windows'
         run: |
-          curl -L -o depends.zip https://github.com/lucasg/Dependencies/releases/download/v1.11/Dependencies-v1.11.zip
+          curl -L -o depends.zip https://github.com/lucasg/Dependencies/releases/download/v1.11.1/Dependencies_x64_Release.zip
           unzip depends.zip -d depends
           mv depends/depends.exe ./depends.exe
       - name: Check missing DLLs with Dependency Walker
