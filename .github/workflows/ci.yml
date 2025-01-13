@@ -26,6 +26,12 @@ jobs:
           vulkan-query-version: 1.3.204.0
           vulkan-components: Vulkan-Headers, Vulkan-Loader
           vulkan-use-cache: true
+      - name: Check Vulkan installation (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          echo "Vulkan SDK path: $VULKAN_SDK"
+          echo "Path variable: $PATH"
+          vulkaninfo || echo "vulkaninfo failed, Vulkan might not be installed correctly"
       - name: Install conan
         run: pip install conan
       - name: Build project
