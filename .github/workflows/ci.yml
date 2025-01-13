@@ -30,10 +30,5 @@ jobs:
           vulkan-query-version: 1.3.204.0
           vulkan-components: Vulkan-Headers, Vulkan-Loader
           vulkan-use-cache: true
-      - name: Display Vulkan SDK Path
-        if: runner.os == 'Windows'
-        run: |
-          echo "VULKAN_SDK: $env:VULKAN_SDK"
-          echo "PATH: $env:PATH"
       - name: Test project
         run: ctest -C Release
