@@ -25,6 +25,8 @@ jobs:
         run: python3 build.py Release
       - name: Run test program
         if: runner.os == 'Windows'
-        run: .\build\pulsar-engine-test.exe
+        run: |
+          cd build
+          ./pulsar-engine-test.exe
       - name: Test project
         run: ctest -C Release
