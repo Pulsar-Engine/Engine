@@ -23,14 +23,7 @@ jobs:
         run: pip install conan
       - name: Build project
         run: python3 build.py Release
-      - name: Download LDD
-        if: runner.os == 'Windows'
-        run: |
-          curl -L -o release.zip https://github.com/Ex-Origin/ldd-win/releases/download/2.0/release.zip
-          unzip release.zip -d ldd
-          mv ldd/ldd.exe ./ldd.exe
-      - name: Check missing DLLs
-        if: runner.os == 'Windows'
-        run: ./ldd.exe "D:\a\Engine\Engine\build\pulsar-engine-test.exe"
+      - name: Run test program
+        run: .\build\pulsar-engine-test.exe
       - name: Test project
         run: ctest -C Release
