@@ -27,6 +27,6 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           cd D:\a\Engine\Engine\build\
-          ./pulsar-engine-test.exe
+          ./pulsar-engine-test.exe 0
       - name: Test project
         run: ctest -C Release
