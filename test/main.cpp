@@ -8,6 +8,8 @@
 #include <glm/mat4x4.hpp>
 #include <chrono>
 
+#include "graphic/backend/vulkan/Instance.hpp"
+
 bool simpleWindowVulkan(void)
 {
     glfwInit();
@@ -31,8 +33,15 @@ bool simpleWindowVulkan(void)
     return (true);
 }
 
+bool my_imp()
+{
+    Instance instance("Vulkan window");
+    return (true);
+}
+
 constexpr bool (*tests[])(void) = {
     simpleWindowVulkan,
+    my_imp,
 };
 
 int main(int argc, char **argv)

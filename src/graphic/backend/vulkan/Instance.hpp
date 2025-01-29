@@ -1,13 +1,14 @@
 #ifndef INSTANCE_HPP_
     #define INSTANCE_HPP_
 
-    #include <vulkan/vulkan.h>
-    #include <vulkan/vulkan_core.h>
+    #include "PhysicalDevice.hpp"
+    #include "DebugUtilsMessengerEXT.hpp"
+    #include "Device.hpp"
+    #include "Surface.hpp"
+    #include "../../Window.hpp"
+
     #include <GLFW/glfw3.h>
-    #include <stdexcept>
-    #include <vector>
     #include <iostream>
-    #include <optional>
     #include <cstring>
 
 const std::vector<const char*> validationLayers = {
@@ -20,40 +21,28 @@ const std::vector<const char*> validationLayers = {
     const bool enableValidationLayers = true;
 #endif
 
-struct QueueFamilyIndices {
-    std::optional<uint32_t> graphicsFamily;
-
-    bool isComplete() {
-        return graphicsFamily.has_value();
-    }
-};
-
-class Instance {
+class Instance : public Primitive<VkInstance> {
     public:
         Instance(const char *title);
         ~Instance();
+        bool checkValidationLayerSupport();
+        std::vector<const char *> getRequiredExtensions();
         static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
             VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
             VkDebugUtilsMessageTypeFlagsEXT messageType,
-            const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-            void* pUserData);
+            const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
+            void *pUserData);
+        PhysicalDevice &getPhysicalDevice();
+        Device &getDevice();
+        Surface &getSurface();
+        Window &getWindow();
     protected:
-        std::vector<const char*> getRequiredExtensions();
-        bool checkValidationLayerSupport();
-        void setupDebugMessenger();
-        VkResult CreateDebugUtilsMessengerEXT(
-            VkInstance instance,
-            const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
-            const VkAllocationCallbacks* pAllocator,
-            VkDebugUtilsMessengerEXT* pDebugMessenger);
-        void DestroyDebugUtilsMessengerEXT(const VkAllocationCallbacks* pAllocator);
-        void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
-        void pickPhysicalDevice();
-        bool isDeviceSuitable(VkPhysicalDevice device);
-        QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
     private:
-        VkInstance primitiveInstance;
-        VkDebugUtilsMessengerEXT debugMessenger;
+        PhysicalDevice _physicalDevice;
+        Device _device;
+        Surface _surface;
+        DebugUtilsMessengerEXT _debugMessenger;
+        Window _window;
 };
 
-#endif /* !INSTANCE_HPP_ */
+#endif
