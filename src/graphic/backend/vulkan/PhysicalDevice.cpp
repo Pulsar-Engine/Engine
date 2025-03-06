@@ -74,6 +74,8 @@ SwapChainSupportDetails PhysicalDevice::querySwapChainSupport(VkPhysicalDevice d
 {
     SwapChainSupportDetails details;
     uint32_t formatCount;
+    if (vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, _surface->getPrimitive(), &details.capabilities) != VK_SUCCESS)
+        throw std::runtime_error("Failed to get surface capabilities!");
     vkGetPhysicalDeviceSurfaceFormatsKHR(device, _surface->getPrimitive(), &formatCount, nullptr);
     if (formatCount != 0) {
         details.formats.resize(formatCount);

@@ -49,6 +49,11 @@ Instance::Instance(const char *title)
     _surface = std::make_unique<Surface>(&_primitive, _window->getPrimitive());
     _physicalDevice = std::make_unique<PhysicalDevice>(_primitive, _surface);
     _device = std::make_unique<Device>(_physicalDevice);
+    _swapchain = std::make_unique<Swapchain>(*this);
+    _imageViews.reserve(_swapchain->getImages().size());
+    for (auto &image : _swapchain->getImages()) {
+        _imageViews.emplace_back(_device, image, _swapchain->getFormat());
+    }
 }
 
 VkBool32 Instance::debugCallback(
@@ -68,6 +73,8 @@ VkBool32 Instance::debugCallback(
 
 Instance::~Instance()
 {
+    this->_imageViews.clear();
+    this->_swapchain.reset();
     this->_device.reset();
     this->_physicalDevice.reset();
     this->_surface.reset();

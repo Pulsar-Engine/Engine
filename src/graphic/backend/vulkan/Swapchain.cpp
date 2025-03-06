@@ -1,4 +1,5 @@
 #include "Swapchain.hpp"
+#include "Instance.hpp"
 
 Swapchain::Swapchain(Instance &instance) : _device(instance.getDevice())
 {
@@ -7,7 +8,7 @@ Swapchain::Swapchain(Instance &instance) : _device(instance.getDevice())
     QueueFamilyIndices indices = physicalDevice->getQueueFamily();
     VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
     VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
-    VkExtent2D extent = chooseSwapExtent(instance, swapChainSupport.capabilities);
+    _imageExtent = chooseSwapExtent(instance, swapChainSupport.capabilities);
     uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
     if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount)
         imageCount = swapChainSupport.capabilities.maxImageCount;
@@ -17,7 +18,7 @@ Swapchain::Swapchain(Instance &instance) : _device(instance.getDevice())
     createInfo.minImageCount = imageCount;
     createInfo.imageFormat = surfaceFormat.format;
     createInfo.imageColorSpace = surfaceFormat.colorSpace;
-    createInfo.imageExtent = extent;
+    createInfo.imageExtent = _imageExtent;
     createInfo.imageArrayLayers = 1;
     createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
@@ -37,6 +38,10 @@ Swapchain::Swapchain(Instance &instance) : _device(instance.getDevice())
     createInfo.oldSwapchain = VK_NULL_HANDLE;
     if (vkCreateSwapchainKHR(_device->getPrimitive(), &createInfo, nullptr, &_primitive) != VK_SUCCESS)
         throw std::runtime_error("failed to create swap chain!");
+    vkGetSwapchainImagesKHR(_device->getPrimitive(), _primitive, &imageCount, nullptr);
+    _images.resize(imageCount);
+    vkGetSwapchainImagesKHR(_device->getPrimitive(), _primitive, &imageCount, _images.data());
+    _imageFormat = surfaceFormat.format;
 
 }
 
@@ -77,3 +82,14 @@ Swapchain::~Swapchain()
         return;
     vkDestroySwapchainKHR(_device->getPrimitive(), _primitive, nullptr);
 }
+
+std::vector<VkImage> &Swapchain::getImages()
+{
+    return _images;
+}
+
+VkFormat &Swapchain::getFormat()
+{
+    return _imageFormat;
+}
+
