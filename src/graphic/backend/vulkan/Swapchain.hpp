@@ -16,10 +16,9 @@ class Swapchain : public Primitive<VkSwapchainKHR> {
         VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes);
         VkExtent2D chooseSwapExtent(Instance &instance, const VkSurfaceCapabilitiesKHR& capabilities);
         ~Swapchain();
-        Swapchain &operator=(const Swapchain &rvalue);
     protected:
     private:
-        Device *_device;
+        std::unique_ptr<Device> &_device;
 };
 
 #endif /* !SWAPCHAIN_HPP_ */

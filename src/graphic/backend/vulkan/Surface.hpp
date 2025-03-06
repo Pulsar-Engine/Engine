@@ -21,7 +21,6 @@ class Surface : public Primitive<VkSurfaceKHR> {
         Surface() = default;
         Surface(VkInstance *instance, GLFWwindow *window);
         ~Surface();
-        Surface &operator=(const Surface &rvalue);
     protected:
     private:
         VkInstance *_instance;

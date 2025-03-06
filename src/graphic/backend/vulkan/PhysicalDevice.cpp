@@ -1,6 +1,6 @@
 #include "PhysicalDevice.hpp"
 
-PhysicalDevice::PhysicalDevice(VkInstance instance, Surface *surface) : _surface(surface)
+PhysicalDevice::PhysicalDevice(VkInstance &instance, std::unique_ptr<Surface> &surface) : _surface(surface)
 {
     uint32_t deviceCount = 0;
     vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
@@ -88,14 +88,7 @@ SwapChainSupportDetails PhysicalDevice::querySwapChainSupport(VkPhysicalDevice d
     return details;
 }
 
-PhysicalDevice &PhysicalDevice::operator=(const PhysicalDevice &rvalue) {
-    _primitive = rvalue._primitive;
-    _indices = rvalue._indices;
-    _surface = rvalue._surface;
-    return *this;
-}
-
-Surface *PhysicalDevice::getSurface() {
+std::unique_ptr<Surface> &PhysicalDevice::getSurface() {
     return _surface;
 }
 

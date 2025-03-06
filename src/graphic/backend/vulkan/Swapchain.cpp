@@ -1,10 +1,10 @@
 #include "Swapchain.hpp"
 
-Swapchain::Swapchain(Instance &instance) : _device(&instance.getDevice())
+Swapchain::Swapchain(Instance &instance) : _device(instance.getDevice())
 {
-    PhysicalDevice &physicalDevice = instance.getPhysicalDevice();
-    SwapChainSupportDetails swapChainSupport = physicalDevice.querySwapChainSupport(physicalDevice.getPrimitive());
-    QueueFamilyIndices indices = physicalDevice.getQueueFamily();
+    std::unique_ptr<PhysicalDevice> &physicalDevice = instance.getPhysicalDevice();
+    SwapChainSupportDetails swapChainSupport = physicalDevice->querySwapChainSupport(physicalDevice->getPrimitive());
+    QueueFamilyIndices indices = physicalDevice->getQueueFamily();
     VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
     VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
     VkExtent2D extent = chooseSwapExtent(instance, swapChainSupport.capabilities);
@@ -13,7 +13,7 @@ Swapchain::Swapchain(Instance &instance) : _device(&instance.getDevice())
         imageCount = swapChainSupport.capabilities.maxImageCount;
     VkSwapchainCreateInfoKHR createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    createInfo.surface = physicalDevice.getSurface()->getPrimitive();
+    createInfo.surface = physicalDevice->getSurface()->getPrimitive();
     createInfo.minImageCount = imageCount;
     createInfo.imageFormat = surfaceFormat.format;
     createInfo.imageColorSpace = surfaceFormat.colorSpace;
@@ -55,7 +55,7 @@ VkExtent2D Swapchain::chooseSwapExtent(Instance &instance, const VkSurfaceCapabi
         return capabilities.currentExtent;
     int width;
     int height;
-    glfwGetFramebufferSize(instance.getWindow().getPrimitive(), &width, &height);
+    glfwGetFramebufferSize(instance.getWindow()->getPrimitive(), &width, &height);
     VkExtent2D actualExtent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
     actualExtent.width = (std::max)(capabilities.minImageExtent.width, (std::min)(capabilities.maxImageExtent.width, actualExtent.width));
     actualExtent.height = (std::max)(capabilities.minImageExtent.height, (std::min)(capabilities.maxImageExtent.height, actualExtent.height));
@@ -69,13 +69,6 @@ VkPresentModeKHR Swapchain::chooseSwapPresentMode(const std::vector<VkPresentMod
             return availablePresentMode;
     }
     return VK_PRESENT_MODE_FIFO_KHR;
-}
-
-Swapchain &Swapchain::operator=(const Swapchain &rvalue)
-{
-    _primitive = rvalue._primitive;
-    _device = rvalue._device;
-    return *this;
 }
 
 Swapchain::~Swapchain()

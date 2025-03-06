@@ -7,9 +7,18 @@
     #include "Surface.hpp"
     #include "../../Window.hpp"
 
+    #include <memory>
     #include <GLFW/glfw3.h>
-    #include <iostream>
     #include <cstring>
+    #include <iostream>
+    #include <cstdlib>
+
+    #ifdef _WIN32
+        #include <vulkan/vulkan_win32.h>
+    #elif __linux__
+        #include <xcb/xcb.h>
+        #include <vulkan/vulkan_xcb.h>
+    #endif
 
 const std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
@@ -32,17 +41,17 @@ class Instance : public Primitive<VkInstance> {
             VkDebugUtilsMessageTypeFlagsEXT messageType,
             const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
             void *pUserData);
-        PhysicalDevice &getPhysicalDevice();
-        Device &getDevice();
-        Surface &getSurface();
-        Window &getWindow();
+        std::unique_ptr<PhysicalDevice> &getPhysicalDevice();
+        std::unique_ptr<Device> &getDevice();
+        std::unique_ptr<Surface> &getSurface();
+        std::unique_ptr<Window> &getWindow();
     protected:
     private:
-        PhysicalDevice _physicalDevice;
-        Device _device;
-        Surface _surface;
-        DebugUtilsMessengerEXT _debugMessenger;
-        Window _window;
+        std::unique_ptr<PhysicalDevice> _physicalDevice;
+        std::unique_ptr<Device> _device;
+        std::unique_ptr<Surface> _surface;
+        std::unique_ptr<DebugUtilsMessengerEXT> _debugMessenger;
+        std::unique_ptr<Window> _window;
 };
 
 #endif

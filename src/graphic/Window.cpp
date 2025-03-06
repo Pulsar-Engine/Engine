@@ -14,15 +14,8 @@ void Window::loop() {
 }
 
 Window::~Window() {
+    if (_primitive == nullptr)
+        return;
     glfwDestroyWindow(_primitive);
     glfwTerminate();
-}
-
-Window &Window::operator=(const Window &rvalue)
-{
-    _primitive = rvalue._primitive;
-    _width = rvalue._width;
-    _height = rvalue._height;
-    _title = rvalue._title;
-    return *this;
 }

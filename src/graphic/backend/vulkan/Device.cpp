@@ -1,7 +1,7 @@
 
 #include "Device.hpp"
 
-Device::Device(PhysicalDevice *physicalDevice) : _physicalDevice(physicalDevice)
+Device::Device(std::unique_ptr<PhysicalDevice> &physicalDevice) : _physicalDevice(physicalDevice)
 {
     QueueFamilyIndices indices = _physicalDevice->getQueueFamily();
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
@@ -26,15 +26,6 @@ Device::Device(PhysicalDevice *physicalDevice) : _physicalDevice(physicalDevice)
     vkGetDeviceQueue(_primitive, indices.graphicsFamily.value(), 0, &_graphicsQueue);
     vkGetDeviceQueue(_primitive, indices.presentFamily.value(), 0, &_presentQueue);
 
-}
-
-Device &Device::operator=(const Device &rvalue)
-{
-    _primitive = rvalue._primitive;
-    _physicalDevice = rvalue._physicalDevice;
-    _graphicsQueue = rvalue._graphicsQueue;
-    _presentQueue = rvalue._presentQueue;
-    return *this;
 }
 
 Device::~Device()

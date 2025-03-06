@@ -1,6 +1,5 @@
 #include "Instance.hpp"
 
-
 Instance::Instance(const char *title)
 {
     if constexpr(enableValidationLayers) {
@@ -22,18 +21,15 @@ Instance::Instance(const char *title)
     createInfo.ppEnabledExtensionNames = requiredExtensions.data();
     createInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
     createInfo.pNext = nullptr;
+    _debugMessenger = std::make_unique<DebugUtilsMessengerEXT>();
     if (enableValidationLayers) {
         createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
         createInfo.ppEnabledLayerNames = validationLayers.data();
-        createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT *) _debugMessenger.getCreateInfo();
+        createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT *) _debugMessenger->getCreateInfo();
     } else
         createInfo.enabledLayerCount = 0;
     if (vkCreateInstance(&createInfo, nullptr, &_primitive) != VK_SUCCESS)
         throw std::runtime_error("failed to create instance!");
-    _debugMessenger.setup(&_primitive);
-    _surface = Surface(&_primitive, _window.getPrimitive());
-    _physicalDevice = PhysicalDevice(_primitive, &_surface);
-    _device = Device(&_physicalDevice);
     uint32_t extensionCount = 0;
     vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
     std::vector<VkExtensionProperties> extensions(extensionCount);
@@ -48,6 +44,11 @@ Instance::Instance(const char *title)
     }
     if (requiredExtensions.size() != 0)
         throw std::runtime_error("failed to find required extensions!");
+    _debugMessenger->setup(&_primitive);
+    _window = std::make_unique<Window>(800, 600, title);
+    _surface = std::make_unique<Surface>(&_primitive, _window->getPrimitive());
+    _physicalDevice = std::make_unique<PhysicalDevice>(_primitive, _surface);
+    _device = std::make_unique<Device>(_physicalDevice);
 }
 
 VkBool32 Instance::debugCallback(
@@ -61,11 +62,17 @@ VkBool32 Instance::debugCallback(
     (void) pUserData;
     (void) pCallbackData;
     //TODO add logging
+    std::cerr << "[" << messageType << "] " << pCallbackData->pMessage << std::endl;
     return VK_FALSE;
 }
 
 Instance::~Instance()
 {
+    this->_device.reset();
+    this->_physicalDevice.reset();
+    this->_surface.reset();
+    this->_window.reset();
+    this->_debugMessenger.reset();
     vkDestroyInstance(_primitive, nullptr);
 }
 
@@ -74,6 +81,13 @@ std::vector<const char *> Instance::getRequiredExtensions()
     uint32_t glfwExtensionCount = 0;
     const char **glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
     std::vector<const char *> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
+    extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+    extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+    #ifdef _WIN32
+        extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+    #elif __linux__
+        extensions.push_back(VK_KHR_XCB_SURFACE_EXTENSION_NAME);
+    #endif
     if (enableValidationLayers)
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     return extensions;
@@ -88,7 +102,6 @@ bool Instance::checkValidationLayerSupport()
     for (const char *layerName : validationLayers) {
         bool layerFound = false;
         for (const auto &layerProperties : availableLayers) {
-            std::cout << layerProperties.layerName << " " << layerName <<  std::endl;
             if (strcmp(layerName, layerProperties.layerName) == 0) {
                 layerFound = true;
                 break;
@@ -100,22 +113,22 @@ bool Instance::checkValidationLayerSupport()
     return true;
 }
 
-PhysicalDevice &Instance::getPhysicalDevice()
+std::unique_ptr<PhysicalDevice> &Instance::getPhysicalDevice()
 {
     return _physicalDevice;
 }
 
-Device &Instance::getDevice()
+std::unique_ptr<Device> &Instance::getDevice()
 {
     return _device;
 }
 
-Surface &Instance::getSurface()
+std::unique_ptr<Surface>  &Instance::getSurface()
 {
     return _surface;
 }
 
-Window &Instance::getWindow()
+std::unique_ptr<Window> &Instance::getWindow()
 {
     return _window;
 }

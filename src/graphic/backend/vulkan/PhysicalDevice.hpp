@@ -31,19 +31,18 @@ const std::vector<const char*> deviceExtensions = {
 class PhysicalDevice : public Primitive<VkPhysicalDevice> {
     public:
         PhysicalDevice() = default;
-        PhysicalDevice(VkInstance instance, Surface *surface);
-        PhysicalDevice &operator=(const PhysicalDevice &rvalue);
+        PhysicalDevice(VkInstance &instance, std::unique_ptr<Surface> &surface);
         ~PhysicalDevice();
         bool isDeviceSuitable(VkPhysicalDevice device);
         bool checkDeviceExtensionSupport(VkPhysicalDevice device);
         SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
         QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
         QueueFamilyIndices getQueueFamily();
-        Surface *getSurface();
+        std::unique_ptr<Surface> &getSurface();
     protected:
     private:
         QueueFamilyIndices _indices;
-        Surface *_surface;
+        std::unique_ptr<Surface> &_surface;
 };
 
 #endif
