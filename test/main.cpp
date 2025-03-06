@@ -36,6 +36,7 @@ bool simpleWindowVulkan(void)
 bool my_imp()
 {
     Instance instance("Vulkan window");
+    instance.getWindow()->loop(instance);
     return (true);
 }
 

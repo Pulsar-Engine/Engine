@@ -8,6 +8,11 @@
     #include "../../Window.hpp"
     #include "Swapchain.hpp"
     #include "ImageView.hpp"
+    #include "render/RenderPass.hpp"
+    #include "render/GraphicsPipeline.hpp"
+    #include "render/FrameBuffers.hpp"
+    #include "CommandBuffer.hpp"
+    #include "SyncObj.hpp"
 
     #include <memory>
     #include <GLFW/glfw3.h>
@@ -47,6 +52,14 @@ class Instance : public Primitive<VkInstance> {
         std::unique_ptr<Device> &getDevice();
         std::unique_ptr<Surface> &getSurface();
         std::unique_ptr<Window> &getWindow();
+        std::unique_ptr<Swapchain> &getSwapchain();
+        std::vector<ImageView> &getImageViews();
+        std::unique_ptr<RenderPass> &getRenderPass();
+        std::unique_ptr<GraphicsPipeline> &getGraphicsPipeline();
+        std::unique_ptr<FrameBuffers> &getFrameBuffers();
+        std::unique_ptr<CommandPool> &getCommandPool();
+        std::unique_ptr<CommandBuffer> &getCommandBuffer();
+        std::unique_ptr<SyncObj> &getSyncObj();
     protected:
     private:
         std::unique_ptr<PhysicalDevice> _physicalDevice;
@@ -56,6 +69,12 @@ class Instance : public Primitive<VkInstance> {
         std::unique_ptr<Window> _window;
         std::unique_ptr<Swapchain> _swapchain;
         std::vector<ImageView> _imageViews;
+        std::unique_ptr<RenderPass> _renderPass;
+        std::unique_ptr<GraphicsPipeline> _graphicsPipeline;
+        std::unique_ptr<FrameBuffers> _frameBuffers;
+        std::unique_ptr<CommandPool> _commandPool;
+        std::unique_ptr<CommandBuffer> _commandBuffer;
+        std::unique_ptr<SyncObj> _syncObj;
 };
 
 #endif

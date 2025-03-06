@@ -6,13 +6,16 @@
 
     #include "backend/vulkan/Primitive.hpp"
 
+class Instance;
+
 class Window : public Primitive<GLFWwindow *> {
     public:
         Window() = default;
         Window(const int width, const int height, const char *title);
         ~Window();
         Window &operator=(const Window &rvalue);
-        void loop();
+        void loop(Instance &instance);
+        void drawFrame(Instance &instance);
     protected:
     private:
         int _width;

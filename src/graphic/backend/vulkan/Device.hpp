@@ -10,6 +10,9 @@ class Device : public Primitive<VkDevice> {
         Device() = default;
         Device(std::unique_ptr<PhysicalDevice> &physicalDevice);
         ~Device();
+        VkQueue &getGraphicsQueue();
+        VkQueue &getPresentQueue();
+        void waitIdle();
     protected:
     private:
         std::unique_ptr<PhysicalDevice> &_physicalDevice;

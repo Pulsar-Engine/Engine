@@ -25,3 +25,4 @@ pulsar-engine-*
 **/m3
 .vscode/
 Testing/
+shaders/

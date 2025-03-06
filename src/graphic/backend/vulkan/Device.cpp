@@ -35,3 +35,18 @@ Device::~Device()
     vkDestroyDevice(_primitive, nullptr);
 }
 
+VkQueue &Device::getGraphicsQueue()
+{
+    return _graphicsQueue;
+}
+
+void Device::waitIdle()
+{
+    vkDeviceWaitIdle(_primitive);
+}
+
+VkQueue &Device::getPresentQueue()
+{
+    return _presentQueue;
+}
+

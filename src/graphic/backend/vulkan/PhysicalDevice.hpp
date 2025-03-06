@@ -37,7 +37,7 @@ class PhysicalDevice : public Primitive<VkPhysicalDevice> {
         bool checkDeviceExtensionSupport(VkPhysicalDevice device);
         SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
         QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
-        QueueFamilyIndices getQueueFamily();
+        QueueFamilyIndices &getQueueFamily();
         std::unique_ptr<Surface> &getSurface();
     protected:
     private:

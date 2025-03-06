@@ -64,7 +64,7 @@ bool PhysicalDevice::checkDeviceExtensionSupport(VkPhysicalDevice device) {
     return requiredExtensions.empty();
 }
 
-QueueFamilyIndices PhysicalDevice::getQueueFamily() {
+QueueFamilyIndices &PhysicalDevice::getQueueFamily() {
     if (_indices.isComplete())
         return _indices;
     throw std::runtime_error("the queue family is not complete!");

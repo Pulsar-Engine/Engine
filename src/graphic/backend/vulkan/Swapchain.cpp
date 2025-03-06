@@ -93,3 +93,8 @@ VkFormat &Swapchain::getFormat()
     return _imageFormat;
 }
 
+VkExtent2D &Swapchain::getExtent()
+{
+    return _imageExtent;
+}
+

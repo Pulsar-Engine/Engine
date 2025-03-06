@@ -21,6 +21,15 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install conan
         run: pip install conan
+      - name: Cache pip and conan dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.conan
+          key: ${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.cmake-version }}-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.cmake-version }}-
       - name: Build project
         run: python3 build.py Release
       - name: Install Vulkan SDK (Windows only)

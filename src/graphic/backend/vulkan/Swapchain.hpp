@@ -22,6 +22,7 @@ class Swapchain : public Primitive<VkSwapchainKHR> {
         ~Swapchain();
         std::vector<VkImage> &getImages();
         VkFormat &getFormat();
+        VkExtent2D &getExtent();
     protected:
     private:
         std::unique_ptr<Device> &_device;

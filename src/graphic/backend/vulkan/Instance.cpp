@@ -51,9 +51,14 @@ Instance::Instance(const char *title)
     _device = std::make_unique<Device>(_physicalDevice);
     _swapchain = std::make_unique<Swapchain>(*this);
     _imageViews.reserve(_swapchain->getImages().size());
-    for (auto &image : _swapchain->getImages()) {
+    for (auto &image : _swapchain->getImages())
         _imageViews.emplace_back(_device, image, _swapchain->getFormat());
-    }
+    _renderPass = std::make_unique<RenderPass>(_device, _swapchain->getFormat());
+    _graphicsPipeline = std::make_unique<GraphicsPipeline>(_device, _swapchain);
+    _frameBuffers = std::make_unique<FrameBuffers>(_graphicsPipeline, _device, _imageViews, _swapchain->getExtent());
+    _commandPool = std::make_unique<CommandPool>(_device, _physicalDevice->getQueueFamily());
+    _commandBuffer = std::make_unique<CommandBuffer>(_device, _commandPool);
+    _syncObj = std::make_unique<SyncObj>(_device);
 }
 
 VkBool32 Instance::debugCallback(
@@ -73,6 +78,12 @@ VkBool32 Instance::debugCallback(
 
 Instance::~Instance()
 {
+    this->_syncObj.reset();
+    this->_commandBuffer.reset();
+    this->_commandPool.reset();
+    this->_frameBuffers.reset();
+    this->_graphicsPipeline.reset();
+    this->_renderPass.reset();
     this->_imageViews.clear();
     this->_swapchain.reset();
     this->_device.reset();
@@ -138,4 +149,44 @@ std::unique_ptr<Surface>  &Instance::getSurface()
 std::unique_ptr<Window> &Instance::getWindow()
 {
     return _window;
+}
+
+std::unique_ptr<Swapchain> &Instance::getSwapchain()
+{
+    return _swapchain;
+}
+
+std::vector<ImageView> &Instance::getImageViews()
+{
+    return _imageViews;
+}
+
+std::unique_ptr<RenderPass> &Instance::getRenderPass()
+{
+    return _renderPass;
+}
+
+std::unique_ptr<GraphicsPipeline> &Instance::getGraphicsPipeline()
+{
+    return _graphicsPipeline;
+}
+
+std::unique_ptr<FrameBuffers> &Instance::getFrameBuffers()
+{
+    return _frameBuffers;
+}
+
+std::unique_ptr<CommandPool> &Instance::getCommandPool()
+{
+    return _commandPool;
+}
+
+std::unique_ptr<CommandBuffer> &Instance::getCommandBuffer()
+{
+    return _commandBuffer;
+}
+
+std::unique_ptr<SyncObj> &Instance::getSyncObj()
+{
+    return _syncObj;
 }
