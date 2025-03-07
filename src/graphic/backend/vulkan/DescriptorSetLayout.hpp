@@ -8,7 +8,6 @@ class DescriptorSetLayout : public Primitive<VkDescriptorSetLayout> {
     public:
         DescriptorSetLayout(std::unique_ptr<Device> &device);
         ~DescriptorSetLayout();
-        VkDescriptorSetLayout &getPrimitive();
         
     protected:
     private:

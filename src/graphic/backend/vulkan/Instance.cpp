@@ -66,6 +66,8 @@ Instance::Instance(const char *title)
     for (auto &image : _swapchain->getImages())
         _imageViews.emplace_back(_device, image, _swapchain->getFormat());
     _descriptorSetLayout = std::make_unique<DescriptorSetLayout>(_device);
+    _descriptorPool = std::make_unique<DescriptorPool>(_device);
+    _descriptorSets = std::make_unique<DescriptorSets>(*_device, *_descriptorSetLayout, *_descriptorPool);
     _graphicsPipeline = std::make_unique<GraphicsPipeline>(_device, _descriptorSetLayout, _swapchain);
     _frameBuffers = std::make_unique<FrameBuffers>(_graphicsPipeline, _device, _imageViews, _swapchain->getExtent());
     _commandPool = std::make_unique<CommandPool>(_device, _physicalDevice->getQueueFamily());
@@ -97,6 +99,7 @@ Instance::~Instance()
     this->_commandPool.reset();
     cleanupSwapchain();
     this->_graphicsPipeline.reset();
+    this->_descriptorPool.reset();
     this->_descriptorSetLayout.reset();
     this->_device.reset();
     this->_physicalDevice.reset();
@@ -186,6 +189,22 @@ void Instance::createBuffers()
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
     );
     _indexBuffer->CPUToGPU(*this, _indices.data());
+
+    _uniformBuffers.reserve(MAX_FRAMES_IN_FLIGHT);
+    for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        _uniformBuffers.emplace_back(
+            *this,
+            sizeof(UniformBufferObject),
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+        );
+        _uniformBuffers[i].map();
+        VkDescriptorBufferInfo bufferInfo{};
+        bufferInfo.buffer = _uniformBuffers[i].getPrimitive();
+        bufferInfo.offset = 0;
+        bufferInfo.range = sizeof(UniformBufferObject);
+        _descriptorSets->write(i, bufferInfo);
+    }
 }
 
 
@@ -274,4 +293,19 @@ std::vector<Vertex> &Instance::getVertices()
 std::unique_ptr<Buffer> &Instance::getIndexBuffer()
 {
     return _indexBuffer;
+}
+
+std::vector<Buffer> &Instance::getUniformBuffers()
+{
+    return _uniformBuffers;
+}
+
+std::unique_ptr<DescriptorPool> &Instance::getDescriptorPool()
+{
+    return _descriptorPool;
+}
+
+std::unique_ptr<DescriptorSets> &Instance::getDescriptorSets()
+{
+    return _descriptorSets;
 }

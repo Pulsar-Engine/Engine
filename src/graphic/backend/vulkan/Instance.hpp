@@ -16,6 +16,9 @@
     #include "render/Vertex.hpp"
     #include "Buffer.hpp"
     #include "DescriptorSetLayout.hpp"
+    #include "render/UniformBufferObject.hpp"
+    #include "DescriptorPool.hpp"
+    #include "DescriptorSets.hpp"
 
     #include <memory>
     #include <GLFW/glfw3.h>
@@ -66,6 +69,9 @@ class Instance : public Primitive<VkInstance> {
         std::vector<Vertex> &getVertices();
         std::vector<uint16_t> &getIndices();
         std::unique_ptr<Buffer> &getIndexBuffer();
+        std::vector<Buffer> &getUniformBuffers();
+        std::unique_ptr<DescriptorPool> &getDescriptorPool();
+        std::unique_ptr<DescriptorSets> &getDescriptorSets();
         void recreateSwapchain();
         void cleanupSwapchain();
         void createBuffers();
@@ -87,6 +93,8 @@ class Instance : public Primitive<VkInstance> {
         std::unique_ptr<CommandBuffers> _commandBuffers;
         std::unique_ptr<Buffer> _vertexBuffer;
         std::unique_ptr<Buffer> _indexBuffer;
+        std::unique_ptr<DescriptorPool> _descriptorPool;
+        std::unique_ptr<DescriptorSets> _descriptorSets;
         std::vector<Buffer> _uniformBuffers;
         std::vector<Vertex> _vertices;
         std::vector<uint16_t> _indices;

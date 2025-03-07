@@ -56,6 +56,7 @@ void Window::drawFrame(Instance &instance) {
     vkResetFences(instance.getDevice()->getPrimitive(), 1, &syncObj.getInFlightFence());
 
     instance.getCommandBuffers()->record(instance, imageIndex, _currentFrame);
+    updateUniformBuffer(instance.getUniformBuffers()[_currentFrame]);
 
     VkSubmitInfo submitInfo = {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -94,6 +95,25 @@ void Window::drawFrame(Instance &instance) {
     }
 
     _currentFrame = (_currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+}
+
+void Window::updateUniformBuffer(Buffer &uniformBuffer) {
+    static auto startTime = std::chrono::high_resolution_clock::now();
+
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+    UniformBufferObject ubo = {};
+    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.proj = glm::perspective(
+        glm::radians(45.0f),
+        800.0f / 600.0f,
+        0.1f,
+        10.0f
+    );
+    ubo.proj[1][1] *= -1;
+    uniformBuffer.copyData(&ubo);
 }
 
 Window::~Window() {

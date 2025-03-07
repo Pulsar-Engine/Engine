@@ -15,6 +15,7 @@ class GraphicsPipeline : public Primitive<VkPipeline> {
         GraphicsPipeline(std::unique_ptr<Device> &device, std::unique_ptr<DescriptorSetLayout> &descriptorSetLayout, std::unique_ptr<Swapchain> &swapchain);
         ~GraphicsPipeline();
         std::unique_ptr<RenderPass> &getRenderPass();
+        VkPipelineLayout &getPipelineLayout();
     protected:
     private:
         std::unique_ptr<Device> &_device;

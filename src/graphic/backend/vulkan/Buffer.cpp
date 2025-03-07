@@ -74,6 +74,16 @@ VkDeviceSize Buffer::getSize()
     return _size;
 }
 
+void Buffer::map()
+{
+    vkMapMemory(_device->getPrimitive(), _memory, 0, _size, 0, &_data);
+}
+
+void Buffer::copyData(void *data)
+{
+    memcpy(_data, data, (size_t) _size);
+}
+
 void Buffer::mapTo(void *data)
 {
     vkMapMemory(_device->getPrimitive(), _memory, 0, _size, 0, &_data);

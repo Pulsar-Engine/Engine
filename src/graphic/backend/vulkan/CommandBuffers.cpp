@@ -70,6 +70,7 @@ void CommandBuffers::record(Instance &instance, uint32_t imageIndex, uint32_t cu
     vkCmdBindIndexBuffer(command, instance.getIndexBuffer()->getPrimitive(), 0, VK_INDEX_TYPE_UINT16);
     
     vkCmdSetScissor(command, 0, 1, &scissor);
+    vkCmdBindDescriptorSets(command, VK_PIPELINE_BIND_POINT_GRAPHICS, instance.getGraphicsPipeline()->getPipelineLayout(), 0, 1, &instance.getDescriptorSets()->getPrimitive()[currentFrame], 0, nullptr);
     vkCmdDrawIndexed(command, static_cast<uint32_t>(instance.getIndices().size()), 1, 0, 0, 0);
     vkCmdEndRenderPass(command);
 

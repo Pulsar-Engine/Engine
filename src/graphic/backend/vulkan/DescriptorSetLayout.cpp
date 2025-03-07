@@ -26,8 +26,3 @@ DescriptorSetLayout::~DescriptorSetLayout()
     vkDestroyDescriptorSetLayout(_device->getPrimitive(), _primitive, nullptr);
 }
 
-VkDescriptorSetLayout &DescriptorSetLayout::getPrimitive()
-{
-    return _primitive;
-}
-

@@ -14,9 +14,11 @@ class Buffer : public Primitive<VkBuffer> {
     public:
         Buffer(Instance &instance, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
         ~Buffer();
+        void map();
         void copyTo(std::unique_ptr<CommandPool> &commandPool, Buffer &dstBuffer);
         void mapTo(void *data);
         VkDeviceSize getSize();
+        void copyData(void *data);
         void CPUToGPU(Instance &instance, void *data);
     protected:
         std::unique_ptr<Device> &_device;
