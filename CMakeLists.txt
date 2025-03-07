@@ -27,7 +27,7 @@ FILE(GLOB_RECURSE ENGINE_SRC ./src/*.cpp)
 
 add_library(pulsar-engine ${ENGINE_SRC})
 target_include_directories(pulsar-engine PUBLIC ./src)
-target_link_libraries(pulsar-engine PUBLIC Vulkan::Vulkan glfw)
+target_link_libraries(pulsar-engine PUBLIC Vulkan::Vulkan glfw glm::glm)
 
 enable_testing()
 
@@ -36,7 +36,7 @@ FILE(GLOB_RECURSE TEST_SRC ./test/*.cpp)
 
 add_executable(pulsar-engine-test ${TEST_SRC})
 target_include_directories(pulsar-engine-test PRIVATE ./test PRIVATE ./src PRIVATE ${glfw3_INCLUDE_DIRS} ${Vulkan_INCLUDE_DIRS} ${glm_INCLUDE_DIRS})
-target_link_libraries(pulsar-engine-test PRIVATE pulsar-engine Vulkan::Vulkan glfw)
+target_link_libraries(pulsar-engine-test PRIVATE pulsar-engine Vulkan::Vulkan glfw glm::glm)
 
 #TODO add some tests
 add_test(NAME simple-vulkan-window COMMAND pulsar-engine-test 0)

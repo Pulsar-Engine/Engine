@@ -3,7 +3,7 @@
     #define SYNCOBJ_HPP_
 
     #include "Device.hpp"
-    #include "CommandBuffer.hpp"
+    #include "CommandBuffers.hpp"
 
 class SyncObj {
     public:

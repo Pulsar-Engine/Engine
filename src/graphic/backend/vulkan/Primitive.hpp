@@ -6,6 +6,8 @@
 #include <stdexcept>
 #include <memory>
 
+const int MAX_FRAMES_IN_FLIGHT = 2;
+
 template<typename T>
 class Primitive {
     public:

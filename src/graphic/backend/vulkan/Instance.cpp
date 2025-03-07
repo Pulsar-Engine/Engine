@@ -44,6 +44,18 @@ Instance::Instance(const char *title)
     }
     if (requiredExtensions.size() != 0)
         throw std::runtime_error("failed to find required extensions!");
+
+    _vertices = {
+        {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+        {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+        {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+        {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+    };
+
+    _indices = {
+        0, 1, 2, 2, 3, 0
+    };
+
     _debugMessenger->setup(&_primitive);
     _window = std::make_unique<Window>(800, 600, title);
     _surface = std::make_unique<Surface>(&_primitive, _window->getPrimitive());
@@ -53,12 +65,12 @@ Instance::Instance(const char *title)
     _imageViews.reserve(_swapchain->getImages().size());
     for (auto &image : _swapchain->getImages())
         _imageViews.emplace_back(_device, image, _swapchain->getFormat());
-    _renderPass = std::make_unique<RenderPass>(_device, _swapchain->getFormat());
-    _graphicsPipeline = std::make_unique<GraphicsPipeline>(_device, _swapchain);
+    _descriptorSetLayout = std::make_unique<DescriptorSetLayout>(_device);
+    _graphicsPipeline = std::make_unique<GraphicsPipeline>(_device, _descriptorSetLayout, _swapchain);
     _frameBuffers = std::make_unique<FrameBuffers>(_graphicsPipeline, _device, _imageViews, _swapchain->getExtent());
     _commandPool = std::make_unique<CommandPool>(_device, _physicalDevice->getQueueFamily());
-    _commandBuffer = std::make_unique<CommandBuffer>(_device, _commandPool);
-    _syncObj = std::make_unique<SyncObj>(_device);
+    createBuffers();
+    _commandBuffers = std::make_unique<CommandBuffers>(_device, _commandPool);
 }
 
 VkBool32 Instance::debugCallback(
@@ -78,20 +90,44 @@ VkBool32 Instance::debugCallback(
 
 Instance::~Instance()
 {
-    this->_syncObj.reset();
-    this->_commandBuffer.reset();
+    this->_uniformBuffers.clear();
+    this->_commandBuffers.reset();
+    this->_indexBuffer.reset();
+    this->_vertexBuffer.reset();
     this->_commandPool.reset();
-    this->_frameBuffers.reset();
+    cleanupSwapchain();
     this->_graphicsPipeline.reset();
-    this->_renderPass.reset();
-    this->_imageViews.clear();
-    this->_swapchain.reset();
+    this->_descriptorSetLayout.reset();
     this->_device.reset();
     this->_physicalDevice.reset();
     this->_surface.reset();
     this->_window.reset();
     this->_debugMessenger.reset();
     vkDestroyInstance(_primitive, nullptr);
+}
+
+void Instance::cleanupSwapchain()
+{
+    this->_frameBuffers.reset();
+    this->_imageViews.clear();
+    this->_swapchain.reset();
+}
+
+void Instance::recreateSwapchain()
+{
+    int width = 0, height = 0;
+    glfwGetFramebufferSize(_window->getPrimitive(), &width, &height);
+    while (width == 0 || height == 0) {
+        glfwGetFramebufferSize(_window->getPrimitive(), &width, &height);
+        glfwWaitEvents();
+    }
+    vkDeviceWaitIdle(_device->getPrimitive());
+    cleanupSwapchain();
+    _swapchain = std::make_unique<Swapchain>(*this);
+    _imageViews.reserve(_swapchain->getImages().size());
+    for (auto &image : _swapchain->getImages())
+        _imageViews.emplace_back(_device, image, _swapchain->getFormat());
+    _frameBuffers = std::make_unique<FrameBuffers>(_graphicsPipeline, _device, _imageViews, _swapchain->getExtent());
 }
 
 std::vector<const char *> Instance::getRequiredExtensions()
@@ -131,6 +167,28 @@ bool Instance::checkValidationLayerSupport()
     return true;
 }
 
+void Instance::createBuffers()
+{
+
+    _vertexBuffer = std::make_unique<Buffer>(
+        *this,
+        sizeof(_vertices[0]) * _vertices.size(),
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+    );
+
+    _vertexBuffer->CPUToGPU(*this, _vertices.data());
+
+    _indexBuffer = std::make_unique<Buffer>(
+        *this,
+        sizeof(_indices[0]) * _indices.size(),
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+    );
+    _indexBuffer->CPUToGPU(*this, _indices.data());
+}
+
+
 std::unique_ptr<PhysicalDevice> &Instance::getPhysicalDevice()
 {
     return _physicalDevice;
@@ -161,11 +219,6 @@ std::vector<ImageView> &Instance::getImageViews()
     return _imageViews;
 }
 
-std::unique_ptr<RenderPass> &Instance::getRenderPass()
-{
-    return _renderPass;
-}
-
 std::unique_ptr<GraphicsPipeline> &Instance::getGraphicsPipeline()
 {
     return _graphicsPipeline;
@@ -181,12 +234,44 @@ std::unique_ptr<CommandPool> &Instance::getCommandPool()
     return _commandPool;
 }
 
-std::unique_ptr<CommandBuffer> &Instance::getCommandBuffer()
+std::unique_ptr<CommandBuffers> &Instance::getCommandBuffers()
 {
-    return _commandBuffer;
+    return _commandBuffers;
 }
 
-std::unique_ptr<SyncObj> &Instance::getSyncObj()
+std::unique_ptr<Buffer> &Instance::getVertexBuffer()
 {
-    return _syncObj;
+    return _vertexBuffer;
+}
+
+std::vector<uint16_t> &Instance::getIndices()
+{
+    return _indices;
+}
+
+std::unique_ptr<DescriptorSetLayout> &Instance::getDescriptorSetLayout()
+{
+    return _descriptorSetLayout;
+}
+
+
+uint32_t Instance::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
+{
+    VkPhysicalDeviceMemoryProperties memProperties;
+    vkGetPhysicalDeviceMemoryProperties(_physicalDevice->getPrimitive(), &memProperties);
+    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+        if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) 
+            return i;
+    }
+    throw std::runtime_error("failed to find suitable memory type!");
+}
+
+std::vector<Vertex> &Instance::getVertices()
+{
+    return _vertices;
+}
+
+std::unique_ptr<Buffer> &Instance::getIndexBuffer()
+{
+    return _indexBuffer;
 }

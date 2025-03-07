@@ -6,12 +6,13 @@
     #include "../Swapchain.hpp"
     #include "Shader.hpp"
     #include "RenderPass.hpp"
+    #include "../DescriptorSetLayout.hpp"
 
     #include <vector>
 
 class GraphicsPipeline : public Primitive<VkPipeline> {
     public:
-        GraphicsPipeline(std::unique_ptr<Device> &device, std::unique_ptr<Swapchain> &swapchain);
+        GraphicsPipeline(std::unique_ptr<Device> &device, std::unique_ptr<DescriptorSetLayout> &descriptorSetLayout, std::unique_ptr<Swapchain> &swapchain);
         ~GraphicsPipeline();
         std::unique_ptr<RenderPass> &getRenderPass();
     protected:

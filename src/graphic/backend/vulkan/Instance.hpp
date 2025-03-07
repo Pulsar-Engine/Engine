@@ -11,8 +11,11 @@
     #include "render/RenderPass.hpp"
     #include "render/GraphicsPipeline.hpp"
     #include "render/FrameBuffers.hpp"
-    #include "CommandBuffer.hpp"
+    #include "CommandBuffers.hpp"
     #include "SyncObj.hpp"
+    #include "render/Vertex.hpp"
+    #include "Buffer.hpp"
+    #include "DescriptorSetLayout.hpp"
 
     #include <memory>
     #include <GLFW/glfw3.h>
@@ -54,12 +57,20 @@ class Instance : public Primitive<VkInstance> {
         std::unique_ptr<Window> &getWindow();
         std::unique_ptr<Swapchain> &getSwapchain();
         std::vector<ImageView> &getImageViews();
-        std::unique_ptr<RenderPass> &getRenderPass();
+        std::unique_ptr<DescriptorSetLayout> &getDescriptorSetLayout();
         std::unique_ptr<GraphicsPipeline> &getGraphicsPipeline();
         std::unique_ptr<FrameBuffers> &getFrameBuffers();
         std::unique_ptr<CommandPool> &getCommandPool();
-        std::unique_ptr<CommandBuffer> &getCommandBuffer();
-        std::unique_ptr<SyncObj> &getSyncObj();
+        std::unique_ptr<CommandBuffers> &getCommandBuffers();
+        std::unique_ptr<Buffer> &getVertexBuffer();
+        std::vector<Vertex> &getVertices();
+        std::vector<uint16_t> &getIndices();
+        std::unique_ptr<Buffer> &getIndexBuffer();
+        void recreateSwapchain();
+        void cleanupSwapchain();
+        void createBuffers();
+        void createCommandBuffers();
+        uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
     protected:
     private:
         std::unique_ptr<PhysicalDevice> _physicalDevice;
@@ -69,12 +80,16 @@ class Instance : public Primitive<VkInstance> {
         std::unique_ptr<Window> _window;
         std::unique_ptr<Swapchain> _swapchain;
         std::vector<ImageView> _imageViews;
-        std::unique_ptr<RenderPass> _renderPass;
+        std::unique_ptr<DescriptorSetLayout> _descriptorSetLayout;
         std::unique_ptr<GraphicsPipeline> _graphicsPipeline;
         std::unique_ptr<FrameBuffers> _frameBuffers;
         std::unique_ptr<CommandPool> _commandPool;
-        std::unique_ptr<CommandBuffer> _commandBuffer;
-        std::unique_ptr<SyncObj> _syncObj;
+        std::unique_ptr<CommandBuffers> _commandBuffers;
+        std::unique_ptr<Buffer> _vertexBuffer;
+        std::unique_ptr<Buffer> _indexBuffer;
+        std::vector<Buffer> _uniformBuffers;
+        std::vector<Vertex> _vertices;
+        std::vector<uint16_t> _indices;
 };
 
 #endif

@@ -1,10 +1,10 @@
 
 #include "GraphicsPipeline.hpp"
+#include "Vertex.hpp"
 
-#include <iostream>
-
-GraphicsPipeline::GraphicsPipeline(std::unique_ptr<Device> &device, std::unique_ptr<Swapchain> &swapchain) : _device(device)
+GraphicsPipeline::GraphicsPipeline(std::unique_ptr<Device> &device, std::unique_ptr<DescriptorSetLayout> &descriptorSetLayout, std::unique_ptr<Swapchain> &swapchain) : _device(device)
 {
+    (void) descriptorSetLayout;
     Shader vert(_device, "shaders/vert.spv");
     Shader frag(_device, "shaders/frag.spv");
 
@@ -32,13 +32,16 @@ GraphicsPipeline::GraphicsPipeline(std::unique_ptr<Device> &device, std::unique_
     dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
     dynamicState.pDynamicStates = dynamicStates.data();
     
+    auto bindingDescription = Vertex::getBindingDescription();
+    auto attributeDescriptions = Vertex::getAttributeDescriptions();
+
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.vertexBindingDescriptionCount = 0;
-    vertexInputInfo.pVertexBindingDescriptions = nullptr;
-    vertexInputInfo.vertexAttributeDescriptionCount = 0;
-    vertexInputInfo.pVertexAttributeDescriptions = nullptr;
-    
+    vertexInputInfo.vertexBindingDescriptionCount = 1;
+    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+    vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+
     VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
     inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -149,6 +152,7 @@ GraphicsPipeline::~GraphicsPipeline()
     _renderPass.reset();
     vkDestroyPipelineLayout(_device->getPrimitive(), pipelineLayout, nullptr);
     vkDestroyPipeline(_device->getPrimitive(), _primitive, nullptr);
+    
 }
 
 std::unique_ptr<RenderPass> &GraphicsPipeline::getRenderPass()

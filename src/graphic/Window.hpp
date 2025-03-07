@@ -16,11 +16,14 @@ class Window : public Primitive<GLFWwindow *> {
         Window &operator=(const Window &rvalue);
         void loop(Instance &instance);
         void drawFrame(Instance &instance);
+        void callbackResize(GLFWwindow *window, int width, int height);
     protected:
     private:
         int _width;
         int _height;
         const char *_title;
+        uint32_t _currentFrame;
+        bool _framebufferResized;
 };
 
 #endif

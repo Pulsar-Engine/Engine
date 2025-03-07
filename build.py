@@ -10,12 +10,20 @@ if len(sys.argv) == 1 or sys.argv[1] not in ["Debug", "Release"]:
     sys.exit(1)
 
 vscode = os.path.exists(".vscode")
+shaders = os.path.exists("shaders")
 
 if vscode:
     shutil.move(".vscode", "b.vscode")
+if shaders:
+    shutil.move("shaders", "b.shaders")
+
 execute("git clean -Xfd")
+
 if vscode:
     shutil.move("b.vscode", ".vscode")
+if shaders:
+    shutil.move("b.shaders", "shaders")
+
 execute("conan profile detect -f")
 execute("conan install . --build=missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True --settings=build_type=" + sys.argv[1])
 execute("cmake . -DCMAKE_BUILD_TYPE=" + sys.argv[1])
