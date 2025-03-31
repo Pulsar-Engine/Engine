@@ -8,7 +8,7 @@
 #include <glm/mat4x4.hpp>
 #include <chrono>
 
-#include "graphic/backend/vulkan/Instance.hpp"
+#include "Engine.hpp"
 
 bool simpleWindowVulkan(void)
 {
@@ -35,21 +35,26 @@ bool simpleWindowVulkan(void)
 
 bool my_imp()
 {
-    Instance instance("Vulkan window");
-    instance.getWindow()->loop(instance);
+    Engine::initWindow(false);
+    Engine::render();
+    Engine::destroyWindow();
     return (true);
 }
 
 constexpr bool (*tests[])(void) = {
     simpleWindowVulkan,
     my_imp,
+    nullptr
 };
 
 int main(int argc, char **argv)
 {
     int test = -1;
-    if (argc == 2)
-        test = std::stoi(argv[1]);
+    if (argc == 2) {
+        try {
+            test = std::stoi(argv[1]);
+        } catch(std::exception error) {}
+    }
     for (int i = 0; tests[i] != nullptr; i++) {
         if (test == -1)
             tests[i]();

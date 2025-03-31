@@ -2,10 +2,17 @@
 #include "Window.hpp"
 #include "backend/vulkan/Instance.hpp"
 
-Window::Window(const int width, const int height, const char *title) : _width(width), _height(height), _title(title), _currentFrame(0) {
+Window *Window::_instance = nullptr;
+
+Window::Window(const int width, const int height, const char *title, bool fromEditor) : _width(width), _height(height), _title(title), _currentFrame(0), _finished(true), _paused(false) {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
+    if (fromEditor) {
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+        glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+    }
     _primitive = glfwCreateWindow(width, height, title, nullptr, nullptr);
     _framebufferResized = false;
     glfwSetWindowUserPointer(_primitive, this);
@@ -13,6 +20,10 @@ Window::Window(const int width, const int height, const char *title) : _width(wi
         auto app = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
         app->callbackResize(window, width, height);
     });
+    if (_instance == nullptr)
+        _instance = this;
+    else
+        throw std::runtime_error("Window instance already exists!");
 }
 
 void Window::callbackResize(GLFWwindow *window, int width, int height) {
@@ -23,11 +34,14 @@ void Window::callbackResize(GLFWwindow *window, int width, int height) {
 }
 
 void Window::loop(Instance &instance) {
-    while (!glfwWindowShouldClose(_primitive)) {
+    _finished = false;
+    while (!glfwWindowShouldClose(_primitive) && !_finished) {
+        instance.getDevice()->waitIdle();
+        if (_paused)
+            continue;
         glfwPollEvents();
         drawFrame(instance);
     }
-    instance.getDevice()->waitIdle();
 }
 
 void Window::drawFrame(Instance &instance) {
@@ -122,3 +136,24 @@ Window::~Window() {
     glfwDestroyWindow(_primitive);
     glfwTerminate();
 }
+
+Window *Window::getInstance() {
+    return _instance;
+}
+
+void Window::close() {
+    _finished = true;
+}
+
+void Window::togglePause() {
+    _paused = !_paused;
+}
+
+void Window::toggleShow() {
+    if (glfwGetWindowAttrib(_primitive, GLFW_VISIBLE))
+        glfwHideWindow(_primitive);
+    else
+        glfwShowWindow(_primitive);
+}
+
+ 

@@ -1,6 +1,8 @@
 #include "Instance.hpp"
 
-Instance::Instance(const char *title)
+
+
+Instance::Instance(const char *title, bool fromEditor)
 {
     if constexpr(enableValidationLayers) {
         if (!checkValidationLayerSupport())
@@ -21,8 +23,8 @@ Instance::Instance(const char *title)
     createInfo.ppEnabledExtensionNames = requiredExtensions.data();
     createInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
     createInfo.pNext = nullptr;
-    _debugMessenger = std::make_unique<DebugUtilsMessengerEXT>();
     if (enableValidationLayers) {
+        _debugMessenger = std::make_unique<DebugUtilsMessengerEXT>();
         createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
         createInfo.ppEnabledLayerNames = validationLayers.data();
         createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT *) _debugMessenger->getCreateInfo();
@@ -56,8 +58,9 @@ Instance::Instance(const char *title)
         0, 1, 2, 2, 3, 0
     };
 
-    _debugMessenger->setup(&_primitive);
-    _window = std::make_unique<Window>(800, 600, title);
+    if (_debugMessenger.get())
+        _debugMessenger->setup(&_primitive);
+    _window = std::make_unique<Window>(800, 600, title, fromEditor);
     _surface = std::make_unique<Surface>(&_primitive, _window->getPrimitive());
     _physicalDevice = std::make_unique<PhysicalDevice>(_primitive, _surface);
     _device = std::make_unique<Device>(_physicalDevice);
@@ -105,7 +108,8 @@ Instance::~Instance()
     this->_physicalDevice.reset();
     this->_surface.reset();
     this->_window.reset();
-    this->_debugMessenger.reset();
+    if (this->_debugMessenger.get())
+        this->_debugMessenger.reset();
     vkDestroyInstance(_primitive, nullptr);
 }
 

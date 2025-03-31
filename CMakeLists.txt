@@ -25,7 +25,17 @@ find_package(glm REQUIRED)
 
 FILE(GLOB_RECURSE ENGINE_SRC ./src/*.cpp)
 
-add_library(pulsar-engine ${ENGINE_SRC})
+add_library(pulsar-engine-static STATIC ${ENGINE_SRC})
+target_include_directories(pulsar-engine-static PUBLIC ./src)
+target_link_libraries(pulsar-engine-static PUBLIC Vulkan::Vulkan glfw glm::glm)
+
+add_library(pulsar-engine SHARED ${ENGINE_SRC})
+
+if (WIN32)
+    target_compile_definitions(pulsar-engine PUBLIC PULSAR_PLATFORM_WINDOWS)
+    target_compile_definitions(pulsar-engine PUBLIC PULSAR_ENGINE_EXPORTS)
+endif()
+
 target_include_directories(pulsar-engine PUBLIC ./src)
 target_link_libraries(pulsar-engine PUBLIC Vulkan::Vulkan glfw glm::glm)
 
@@ -36,7 +46,7 @@ FILE(GLOB_RECURSE TEST_SRC ./test/*.cpp)
 
 add_executable(pulsar-engine-test ${TEST_SRC})
 target_include_directories(pulsar-engine-test PRIVATE ./test PRIVATE ./src PRIVATE ${glfw3_INCLUDE_DIRS} ${Vulkan_INCLUDE_DIRS} ${glm_INCLUDE_DIRS})
-target_link_libraries(pulsar-engine-test PRIVATE pulsar-engine Vulkan::Vulkan glfw glm::glm)
+target_link_libraries(pulsar-engine-test PRIVATE pulsar-engine-static Vulkan::Vulkan glfw glm::glm)
 
 #TODO add some tests
 add_test(NAME simple-vulkan-window COMMAND pulsar-engine-test 0)

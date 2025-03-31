@@ -14,24 +14,30 @@
     #include "backend/vulkan/Buffer.hpp"
 
 class Instance;
-
 class Window : public Primitive<GLFWwindow *> {
     public:
         Window() = default;
-        Window(const int width, const int height, const char *title);
+        Window(const int width, const int height, const char *title, bool fromEditor);
         ~Window();
         Window &operator=(const Window &rvalue);
         void loop(Instance &instance);
         void drawFrame(Instance &instance);
         void callbackResize(GLFWwindow *window, int width, int height);
         void updateUniformBuffer(Buffer &uniformBuffer);
+        static Window *getInstance();
+        void close();
+        void togglePause();
+        void toggleShow();
     protected:
     private:
+        static Window *_instance;
         int _width;
         int _height;
         const char *_title;
         uint32_t _currentFrame;
         bool _framebufferResized;
+        std::atomic<bool> _finished;
+        std::atomic<bool> _paused;
 };
 
 #endif

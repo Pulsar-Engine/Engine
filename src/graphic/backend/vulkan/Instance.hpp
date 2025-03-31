@@ -45,7 +45,7 @@ const std::vector<const char*> validationLayers = {
 
 class Instance : public Primitive<VkInstance> {
     public:
-        Instance(const char *title);
+        Instance(const char *title, bool fromEditor = false);
         ~Instance();
         bool checkValidationLayerSupport();
         std::vector<const char *> getRequiredExtensions();
