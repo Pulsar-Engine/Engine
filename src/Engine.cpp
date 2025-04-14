@@ -35,7 +35,8 @@ void *Engine::getWindowPtr()
     #ifdef _WIN32
         return (void *) glfwGetWin32Window(_instance->getWindow()->getPrimitive());
     #elif __linux__
-        return (void *) glfwGetX11Window(_instance->getWindow()->getPrimitive());
+        return nullptr; //TODO Handling X11, XCB, Wayland
+        //return (void *) glfwGetX11Window(_instance->getWindow()->getPrimitive());
     #else
         return nullptr;
     #endif

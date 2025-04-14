@@ -9,6 +9,7 @@
     #include <glm/gtc/matrix_transform.hpp>
 
     #include <chrono>
+    #include <atomic>
 
     #include "backend/vulkan/Primitive.hpp"
     #include "backend/vulkan/Buffer.hpp"
