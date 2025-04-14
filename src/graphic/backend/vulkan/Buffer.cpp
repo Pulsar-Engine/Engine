@@ -35,37 +35,32 @@ Buffer::~Buffer()
     vkFreeMemory(_device->getPrimitive(), _memory, nullptr);
 }
 
+void Buffer::bindImage(Instance &instance, VkImage &image, VkMemoryPropertyFlags properties)
+{
+    VkMemoryRequirements memRequirements;
+    vkGetImageMemoryRequirements(_device->getPrimitive(), image, &memRequirements);
+
+    VkMemoryAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memRequirements.size;
+    allocInfo.memoryTypeIndex = instance.findMemoryType(memRequirements.memoryTypeBits, properties);
+
+    if (vkAllocateMemory(_device->getPrimitive(), &allocInfo, nullptr, &_memory) != VK_SUCCESS)
+        throw std::runtime_error("failed to allocate vertex buffer memory!");
+    vkBindImageMemory(_device->getPrimitive(), image, _memory, 0);
+}
+
+
+
 void Buffer::copyTo(std::unique_ptr<CommandPool> &commandPool, Buffer &dstBuffer)
 {
-    VkCommandBufferAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandPool = commandPool->getPrimitive();
-    allocInfo.commandBufferCount = 1;
-
-    VkCommandBuffer commandBuffer;
-    vkAllocateCommandBuffers(_device->getPrimitive(), &allocInfo, &commandBuffer);
-
-    VkCommandBufferBeginInfo beginInfo{};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-    vkBeginCommandBuffer(commandBuffer, &beginInfo);
-
+    VkCommandBuffer commandBuffer = CommandBuffers::beginSingleTimeCommands(_device, commandPool);
     VkBufferCopy copyRegion{};
     copyRegion.srcOffset = 0;
     copyRegion.dstOffset = 0;
     copyRegion.size = _size;
     vkCmdCopyBuffer(commandBuffer, _primitive, dstBuffer.getPrimitive(), 1, &copyRegion);
-    vkEndCommandBuffer(commandBuffer);
-    VkSubmitInfo submitInfo{};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &commandBuffer;
-
-    vkQueueSubmit(_device->getPresentQueue(), 1, &submitInfo, VK_NULL_HANDLE);
-    vkQueueWaitIdle(_device->getPresentQueue());
-    vkFreeCommandBuffers(_device->getPrimitive(), commandPool->getPrimitive(), 1, &commandBuffer);
+    CommandBuffers::endSingleTimeCommands(_device, commandPool, commandBuffer);
     dstBuffer._data = _data;
 }
 
