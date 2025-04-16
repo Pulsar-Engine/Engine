@@ -36,7 +36,6 @@ if (WIN32)
     target_compile_definitions(pulsar-engine PUBLIC PULSAR_ENGINE_EXPORTS)
 endif()
 
-add_library(pulsar-engine ${ENGINE_SRC})
 target_include_directories(pulsar-engine PUBLIC ./src ./libs/stb)
 target_link_libraries(pulsar-engine PUBLIC Vulkan::Vulkan glfw glm::glm)
 
