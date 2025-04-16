@@ -17,11 +17,14 @@ if len(sys.argv) == 1 or sys.argv[1] not in ["Debug", "Release"]:
 
 vscode = os.path.exists(".vscode")
 shaders = os.path.exists("shaders")
+textures = os.path.exists("textures")
 
 if vscode:
     shutil.move(".vscode", "b.vscode")
 if shaders:
     shutil.move("shaders", "b.shaders")
+if textures:
+    shutil.move("textures", "b.textures")
 
 result = execute("git clean -Xfd", True)
 
@@ -29,6 +32,8 @@ if vscode:
     shutil.move("b.vscode", ".vscode")
 if shaders:
     shutil.move("b.shaders", "shaders")
+if textures:
+    shutil.move("b.textures", "textures")
 
 if result != 0:
     print("Failed to clean the repository")

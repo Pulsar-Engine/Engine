@@ -14,6 +14,7 @@ class Buffer : public Primitive<VkBuffer> {
     public:
         Buffer(Instance &instance, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
         ~Buffer();
+        void bindImage(Instance &instance, VkImage &image, VkMemoryPropertyFlags properties);
         void map();
         void copyTo(std::unique_ptr<CommandPool> &commandPool, Buffer &dstBuffer);
         void mapTo(void *data);

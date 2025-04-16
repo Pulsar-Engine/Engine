@@ -95,6 +95,7 @@ VkBool32 Instance::debugCallback(
 
 Instance::~Instance()
 {
+    this->_stagingBuffer.reset();
     this->_uniformBuffers.clear();
     this->_commandBuffers.reset();
     this->_indexBuffer.reset();
@@ -209,6 +210,16 @@ void Instance::createBuffers()
         bufferInfo.range = sizeof(UniformBufferObject);
         _descriptorSets->write(i, bufferInfo);
     }
+
+    TextureImage textureImage("textures/texture.jpg");
+    _stagingBuffer = std::make_unique<Buffer>(
+        *this,
+        textureImage.getSize(),
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+    );
+    _stagingBuffer->mapTo(textureImage.getPixels());
+    
 }
 
 

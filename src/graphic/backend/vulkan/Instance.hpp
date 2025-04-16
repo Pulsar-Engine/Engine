@@ -19,6 +19,7 @@
     #include "render/UniformBufferObject.hpp"
     #include "DescriptorPool.hpp"
     #include "DescriptorSets.hpp"
+    #include "render/TextureImage.hpp"
 
     #include <memory>
     #include <GLFW/glfw3.h>
@@ -93,6 +94,7 @@ class Instance : public Primitive<VkInstance> {
         std::unique_ptr<CommandBuffers> _commandBuffers;
         std::unique_ptr<Buffer> _vertexBuffer;
         std::unique_ptr<Buffer> _indexBuffer;
+        std::unique_ptr<Buffer> _stagingBuffer;
         std::unique_ptr<DescriptorPool> _descriptorPool;
         std::unique_ptr<DescriptorSets> _descriptorSets;
         std::vector<Buffer> _uniformBuffers;
