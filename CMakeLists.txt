@@ -26,7 +26,7 @@ find_package(glm REQUIRED)
 FILE(GLOB_RECURSE ENGINE_SRC ./src/*.cpp)
 
 add_library(pulsar-engine-static STATIC ${ENGINE_SRC})
-target_include_directories(pulsar-engine-static PUBLIC ./src)
+target_include_directories(pulsar-engine-static PUBLIC ./src ./libs/stb)
 target_link_libraries(pulsar-engine-static PUBLIC Vulkan::Vulkan glfw glm::glm)
 
 add_library(pulsar-engine SHARED ${ENGINE_SRC})
