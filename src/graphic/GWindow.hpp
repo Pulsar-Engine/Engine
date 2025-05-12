@@ -1,5 +1,5 @@
-#ifndef WINDOW_HPP_
-    #define WINDOW_HPP_
+#ifndef GWINDOW_HPP_
+    #define GWINDOW_HPP_
     
     #define GLFW_INCLUDE_VULKAN
     #include <GLFW/glfw3.h>
@@ -15,23 +15,23 @@
     #include "backend/vulkan/Buffer.hpp"
 
 class Instance;
-class Window : public Primitive<GLFWwindow *> {
+class GWindow : public Primitive<GLFWwindow *> {
     public:
-        Window() = default;
-        Window(const int width, const int height, const char *title, bool fromEditor);
-        ~Window();
-        Window &operator=(const Window &rvalue);
+        GWindow() = default;
+        GWindow(const int width, const int height, const char *title, bool fromEditor);
+        ~GWindow();
+        GWindow &operator=(const GWindow &rvalue);
         void loop(Instance &instance);
         void drawFrame(Instance &instance);
         void callbackResize(GLFWwindow *window, int width, int height);
         void updateUniformBuffer(Buffer &uniformBuffer);
-        static Window *getInstance();
+        static GWindow *getInstance();
         void close();
         void togglePause();
         void toggleShow();
     protected:
     private:
-        static Window *_instance;
+        static GWindow *_instance;
         int _width;
         int _height;
         const char *_title;

@@ -1,7 +1,5 @@
 #include "Instance.hpp"
 
-
-
 Instance::Instance(const char *title, bool fromEditor)
 {
     if constexpr(enableValidationLayers) {
@@ -60,7 +58,7 @@ Instance::Instance(const char *title, bool fromEditor)
 
     if (_debugMessenger.get())
         _debugMessenger->setup(&_primitive);
-    _window = std::make_unique<Window>(800, 600, title, fromEditor);
+    _window = std::make_unique<GWindow>(800, 600, title, fromEditor);
     _surface = std::make_unique<Surface>(&_primitive, _window->getPrimitive());
     _physicalDevice = std::make_unique<PhysicalDevice>(_primitive, _surface);
     _device = std::make_unique<Device>(_physicalDevice);
@@ -238,7 +236,7 @@ std::unique_ptr<Surface>  &Instance::getSurface()
     return _surface;
 }
 
-std::unique_ptr<Window> &Instance::getWindow()
+std::unique_ptr<GWindow> &Instance::getWindow()
 {
     return _window;
 }

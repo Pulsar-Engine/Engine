@@ -1,10 +1,10 @@
 
-#include "Window.hpp"
+#include "GWindow.hpp"
 #include "backend/vulkan/Instance.hpp"
 
-Window *Window::_instance = nullptr;
+GWindow *GWindow::_instance = nullptr;
 
-Window::Window(const int width, const int height, const char *title, bool fromEditor) : _width(width), _height(height), _title(title), _currentFrame(0), _finished(true), _paused(false) {
+GWindow::GWindow(const int width, const int height, const char *title, bool fromEditor) : _width(width), _height(height), _title(title), _currentFrame(0), _finished(true), _paused(false) {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
@@ -17,7 +17,7 @@ Window::Window(const int width, const int height, const char *title, bool fromEd
     _framebufferResized = false;
     glfwSetWindowUserPointer(_primitive, this);
     glfwSetFramebufferSizeCallback(_primitive, [](GLFWwindow* window, int width, int height) {
-        auto app = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+        auto app = reinterpret_cast<GWindow*>(glfwGetWindowUserPointer(window));
         app->callbackResize(window, width, height);
     });
     if (_instance == nullptr)
@@ -26,14 +26,14 @@ Window::Window(const int width, const int height, const char *title, bool fromEd
         throw std::runtime_error("Window instance already exists!");
 }
 
-void Window::callbackResize(GLFWwindow *window, int width, int height) {
+void GWindow::callbackResize(GLFWwindow *window, int width, int height) {
     (void) window;
     (void) width;
     (void) height;
     _framebufferResized = true;
 }
 
-void Window::loop(Instance &instance) {
+void GWindow::loop(Instance &instance) {
     _finished = false;
     while (!glfwWindowShouldClose(_primitive) && !_finished) {
         instance.getDevice()->waitIdle();
@@ -44,7 +44,7 @@ void Window::loop(Instance &instance) {
     }
 }
 
-void Window::drawFrame(Instance &instance) {
+void GWindow::drawFrame(Instance &instance) {
     SyncObj &syncObj = instance.getCommandBuffers()->getSyncObjs()[_currentFrame];
     VkCommandBuffer &commandBuffer = instance.getCommandBuffers()->getCommandBuffers()[_currentFrame];
 
@@ -111,7 +111,7 @@ void Window::drawFrame(Instance &instance) {
     _currentFrame = (_currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-void Window::updateUniformBuffer(Buffer &uniformBuffer) {
+void GWindow::updateUniformBuffer(Buffer &uniformBuffer) {
     static auto startTime = std::chrono::high_resolution_clock::now();
 
     auto currentTime = std::chrono::high_resolution_clock::now();
@@ -130,26 +130,26 @@ void Window::updateUniformBuffer(Buffer &uniformBuffer) {
     uniformBuffer.copyData(&ubo);
 }
 
-Window::~Window() {
+GWindow::~GWindow() {
     if (_primitive == nullptr)
         return;
     glfwDestroyWindow(_primitive);
     glfwTerminate();
 }
 
-Window *Window::getInstance() {
+GWindow *GWindow::getInstance() {
     return _instance;
 }
 
-void Window::close() {
+void GWindow::close() {
     _finished = true;
 }
 
-void Window::togglePause() {
+void GWindow::togglePause() {
     _paused = !_paused;
 }
 
-void Window::toggleShow() {
+void GWindow::toggleShow() {
     if (glfwGetWindowAttrib(_primitive, GLFW_VISIBLE))
         glfwHideWindow(_primitive);
     else
