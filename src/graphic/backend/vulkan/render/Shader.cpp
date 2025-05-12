@@ -21,7 +21,7 @@ std::vector<char> Shader::readFile(const std::string &filename)
     }
     size_t fileSize = (size_t) file.tellg();
     std::vector<char> code;
-    code.resize(fileSize);g
+    code.resize(fileSize);
     file.seekg(0);
     file.read(code.data(), fileSize);
     file.close();

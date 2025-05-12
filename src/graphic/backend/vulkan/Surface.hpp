@@ -7,9 +7,6 @@
     #ifdef _WIN32
         #define GLFW_EXPOSE_NATIVE_WIN32
         #define VK_USE_PLATFORM_WIN32_KHR
-    #else
-        #define GLFW_EXPOSE_NATIVE_WAYLAND
-        #define GLFW_EXPOSE_NATIVE_X11
     #endif
 
     #define GLFW_INCLUDE_VULKAN
