@@ -43,7 +43,6 @@ target_link_libraries(pulsar-engine PUBLIC Vulkan::Vulkan glfw glm::glm)
 
 enable_testing()
 
-
 FILE(GLOB_RECURSE TEST_SRC ./test/*.cpp)
 
 add_executable(pulsar-engine-test ${TEST_SRC})

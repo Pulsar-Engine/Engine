@@ -15,6 +15,7 @@ build/
 **/.vs/
 conan*
 !conanfile.txt
+!conanfile.py
 CMakePresets.json
 pulsar-engine-*
 *.bat
