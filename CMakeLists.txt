@@ -40,7 +40,6 @@ endif()
 
 target_include_directories(pulsar-engine PUBLIC ./src ./libs/stb)
 target_link_libraries(pulsar-engine PUBLIC Vulkan::Vulkan glfw glm::glm)
-target_link_options(pulsar-engine PRIVATE -Wl,--exclude-libs,ALL)
 
 enable_testing()
 

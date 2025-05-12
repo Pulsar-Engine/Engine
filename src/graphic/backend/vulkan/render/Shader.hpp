@@ -7,6 +7,7 @@
 
     #include <vector>
     #include <fstream>
+    #include <cstring>
 
 class Shader : public Primitive<VkShaderModule> {
     public:

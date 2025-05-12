@@ -17,7 +17,11 @@ std::vector<char> Shader::readFile(const std::string &filename)
     std::ifstream file(filename, std::ios::ate | std::ios::binary);
     if (!file.is_open()) {
         char error[1024];
-        strerror_s(error, sizeof(error), errno);
+        #ifdef _WIN32
+            strerror_s(error, sizeof(error), errno);
+        #else
+            strerror_r(errno, error, sizeof(error));
+        #endif
         std::string errorString(error);
         throw std::runtime_error(errorString + " => " + filename);
     }
