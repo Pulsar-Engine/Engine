@@ -50,7 +50,7 @@ int main(int argc, char **argv)
     if (argc == 2) {
         try {
             test = std::stoi(argv[1]);
-        } catch(const std::exception &error) {}
+        } catch(const std::exception &) {}
     }
     for (int i = 0; tests[i] != nullptr; i++) {
         if (test == -1)
