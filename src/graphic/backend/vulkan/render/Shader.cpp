@@ -16,8 +16,10 @@ std::vector<char> Shader::readFile(const std::string &filename)
 {
     std::ifstream file(filename, std::ios::ate | std::ios::binary);
     if (!file.is_open()) {
-        std::cerr << "Error: " << strerror(errno) << std::endl;
-        throw std::runtime_error("failed to open file! : " + filename);
+        char error[1024];
+        strerror_s(error, sizeof(error), errno);
+        std::string errorString(error);
+        throw std::runtime_error(errorString + " => " + filename);
     }
     size_t fileSize = (size_t) file.tellg();
     std::vector<char> code;
