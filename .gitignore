@@ -14,7 +14,7 @@ x86/
 build/
 **/.vs/
 conan*
-!conanfile.txt
+!conanfile.py
 CMakePresets.json
 pulsar-engine-*
 *.bat
@@ -26,3 +26,5 @@ pulsar-engine-*
 .vscode/
 Testing/
 shaders/
+textures/
+models/

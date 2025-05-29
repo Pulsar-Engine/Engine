@@ -1,17 +1,18 @@
 #include "FrameBuffers.hpp"
 
-FrameBuffers::FrameBuffers(std::unique_ptr<GraphicsPipeline> &graphicsPipeline, std::unique_ptr<Device> &device,std::vector<ImageView> &imageViews, VkExtent2D &extent) : _device(device)
+FrameBuffers::FrameBuffers(std::unique_ptr<GraphicsPipeline> &graphicsPipeline, DepthResources &depthResources, std::unique_ptr<Device> &device,std::vector<ImageView> &imageViews, VkExtent2D &extent) : _device(device)
 {
     _swapChainFramebuffers.resize(imageViews.size());
     for (size_t i = 0; i < imageViews.size(); i++) {
-        VkImageView attachments[] = {
-            imageViews[i].getPrimitive()
+        std::array<VkImageView, 2> attachments = {
+            imageViews[i].getPrimitive(),
+            depthResources.getImageView().getPrimitive()
         };
         VkFramebufferCreateInfo framebufferInfo{};
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         framebufferInfo.renderPass = graphicsPipeline->getRenderPass()->getPrimitive();
-        framebufferInfo.attachmentCount = 1;
-        framebufferInfo.pAttachments = attachments;
+        framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+        framebufferInfo.pAttachments = attachments.data();
         framebufferInfo.width = extent.width;
         framebufferInfo.height = extent.height;
         framebufferInfo.layers = 1;

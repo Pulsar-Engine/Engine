@@ -7,7 +7,7 @@
 
 class RenderPass : public Primitive<VkRenderPass> {
     public:
-        RenderPass(std::unique_ptr<Device> &device, VkFormat &format);
+        RenderPass(PhysicalDevice &physicalDevice, std::unique_ptr<Device> &device, VkFormat &format);
         ~RenderPass();
     protected:
     private:

@@ -12,7 +12,7 @@
 
 class GraphicsPipeline : public Primitive<VkPipeline> {
     public:
-        GraphicsPipeline(std::unique_ptr<Device> &device, std::unique_ptr<DescriptorSetLayout> &descriptorSetLayout, std::unique_ptr<Swapchain> &swapchain);
+        GraphicsPipeline(PhysicalDevice &physicalDevice, std::unique_ptr<Device> &device, std::unique_ptr<DescriptorSetLayout> &descriptorSetLayout, std::unique_ptr<Swapchain> &swapchain);
         ~GraphicsPipeline();
         std::unique_ptr<RenderPass> &getRenderPass();
         VkPipelineLayout &getPipelineLayout();

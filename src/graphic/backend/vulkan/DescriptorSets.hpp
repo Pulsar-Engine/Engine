@@ -9,7 +9,7 @@ class DescriptorSets {
         DescriptorSets(Device &device, DescriptorSetLayout &descriptorSetLayout, DescriptorPool &descriptorPool);
         ~DescriptorSets();
         std::vector<VkDescriptorSet> &getPrimitive();
-        void write(uint32_t index, VkDescriptorBufferInfo &bufferInfo);
+        void write(uint32_t index, VkDescriptorBufferInfo &bufferInfo, VkDescriptorImageInfo &imageInfo);
 
     protected:
     private:

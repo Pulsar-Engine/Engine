@@ -1,20 +1,17 @@
-/*
-** EPITECH PROJECT, 2025
-** Engine
-** File description:
-** Engine
-*/
-
 #ifndef ENGINE_HPP_
-#define ENGINE_HPP_
+    #define ENGINE_HPP_
 
-#include "graphic/backend/vulkan/Instance.hpp"
+    #include "graphic/backend/vulkan/Instance.hpp"
 
-#ifdef _WIN32
-    #define ENGINE_API __declspec(dllexport)
-#else
-    #define ENGINE_API
-#endif
+    #ifdef _WIN32
+        #define ENGINE_API __declspec(dllexport)
+    #else
+        #define ENGINE_API __attribute__((visibility("default")))
+        #include <dlfcn.h>
+
+        typedef void *(*glfwGetWindowWayland_t)(GLFWwindow *);
+        typedef unsigned long (*glfwGetWindowX11_t)(GLFWwindow *);
+    #endif
 
 class Engine {
     public:

@@ -1,6 +1,5 @@
 #include "Instance.hpp"
-
-
+#include "render/Model.hpp"
 
 Instance::Instance(const char *title, bool fromEditor)
 {
@@ -46,36 +45,29 @@ Instance::Instance(const char *title, bool fromEditor)
     }
     if (requiredExtensions.size() != 0)
         throw std::runtime_error("failed to find required extensions!");
-
-    _vertices = {
-        {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-        {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-        {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-        {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
-    };
-
-    _indices = {
-        0, 1, 2, 2, 3, 0
-    };
-
+    Model model("models/viking_room.obj");
+    _vertices = model.getVertices();
+    _indices = model.getIndices();
     if (_debugMessenger.get())
         _debugMessenger->setup(&_primitive);
-    _window = std::make_unique<Window>(800, 600, title, fromEditor);
+    _window = std::make_unique<GWindow>(800, 600, title, fromEditor);
     _surface = std::make_unique<Surface>(&_primitive, _window->getPrimitive());
     _physicalDevice = std::make_unique<PhysicalDevice>(_primitive, _surface);
     _device = std::make_unique<Device>(_physicalDevice);
     _swapchain = std::make_unique<Swapchain>(*this);
     _imageViews.reserve(_swapchain->getImages().size());
     for (auto &image : _swapchain->getImages())
-        _imageViews.emplace_back(_device, image, _swapchain->getFormat());
+        _imageViews.emplace_back(_device, image, _swapchain->getFormat(), VK_IMAGE_ASPECT_COLOR_BIT);
     _descriptorSetLayout = std::make_unique<DescriptorSetLayout>(_device);
     _descriptorPool = std::make_unique<DescriptorPool>(_device);
     _descriptorSets = std::make_unique<DescriptorSets>(*_device, *_descriptorSetLayout, *_descriptorPool);
-    _graphicsPipeline = std::make_unique<GraphicsPipeline>(_device, _descriptorSetLayout, _swapchain);
-    _frameBuffers = std::make_unique<FrameBuffers>(_graphicsPipeline, _device, _imageViews, _swapchain->getExtent());
+    _graphicsPipeline = std::make_unique<GraphicsPipeline>(*_physicalDevice, _device, _descriptorSetLayout, _swapchain);
     _commandPool = std::make_unique<CommandPool>(_device, _physicalDevice->getQueueFamily());
-    createBuffers();
     _commandBuffers = std::make_unique<CommandBuffers>(_device, _commandPool);
+    _depthResources = std::make_unique<DepthResources>(*this, *_physicalDevice, *_swapchain);
+    _frameBuffers = std::make_unique<FrameBuffers>(_graphicsPipeline, *_depthResources, _device, _imageViews, _swapchain->getExtent());
+    _textureSampler = std::make_unique<TextureSampler>(_device, *_physicalDevice);
+    createBuffers();
 }
 
 VkBool32 Instance::debugCallback(
@@ -95,19 +87,24 @@ VkBool32 Instance::debugCallback(
 
 Instance::~Instance()
 {
-    this->_uniformBuffers.clear();
     this->_commandBuffers.reset();
+    cleanupSwapchain();
+    this->_image.reset();
+    this->_stagingBuffer.reset();
+    this->_uniformBuffers.clear();
+    this->_textureSampler.reset();
+    this->_textureImageView.reset();
+    this->_depthResources.reset();
     this->_indexBuffer.reset();
     this->_vertexBuffer.reset();
     this->_commandPool.reset();
-    cleanupSwapchain();
     this->_graphicsPipeline.reset();
     this->_descriptorPool.reset();
     this->_descriptorSetLayout.reset();
-    this->_device.reset();
-    this->_physicalDevice.reset();
     this->_surface.reset();
     this->_window.reset();
+    this->_device.reset();
+    this->_physicalDevice.reset();
     if (this->_debugMessenger.get())
         this->_debugMessenger.reset();
     vkDestroyInstance(_primitive, nullptr);
@@ -118,6 +115,7 @@ void Instance::cleanupSwapchain()
     this->_frameBuffers.reset();
     this->_imageViews.clear();
     this->_swapchain.reset();
+    this->_depthResources.reset();
 }
 
 void Instance::recreateSwapchain()
@@ -133,8 +131,9 @@ void Instance::recreateSwapchain()
     _swapchain = std::make_unique<Swapchain>(*this);
     _imageViews.reserve(_swapchain->getImages().size());
     for (auto &image : _swapchain->getImages())
-        _imageViews.emplace_back(_device, image, _swapchain->getFormat());
-    _frameBuffers = std::make_unique<FrameBuffers>(_graphicsPipeline, _device, _imageViews, _swapchain->getExtent());
+        _imageViews.emplace_back(_device, image, _swapchain->getFormat(), VK_IMAGE_ASPECT_COLOR_BIT);
+    _depthResources = std::make_unique<DepthResources>(*this, *_physicalDevice, *_swapchain);
+    _frameBuffers = std::make_unique<FrameBuffers>(_graphicsPipeline, *_depthResources, _device, _imageViews, _swapchain->getExtent());
 }
 
 std::vector<const char *> Instance::getRequiredExtensions()
@@ -176,16 +175,13 @@ bool Instance::checkValidationLayerSupport()
 
 void Instance::createBuffers()
 {
-
     _vertexBuffer = std::make_unique<Buffer>(
         *this,
         sizeof(_vertices[0]) * _vertices.size(),
         VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-    );
-
+        );
     _vertexBuffer->CPUToGPU(*this, _vertices.data());
-
     _indexBuffer = std::make_unique<Buffer>(
         *this,
         sizeof(_indices[0]) * _indices.size(),
@@ -193,6 +189,31 @@ void Instance::createBuffers()
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
     );
     _indexBuffer->CPUToGPU(*this, _indices.data());
+    _textureImage = std::make_unique<TextureImage>("textures/viking_room.png");
+    _stagingBuffer = std::make_unique<Buffer>(
+        *this,
+        _textureImage->getSize(),
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+    );
+    _stagingBuffer->mapTo(_textureImage->getPixels());
+    _textureImage->freePixels();
+    _image = std::make_unique<Image>(
+        *this,
+        *_textureImage,
+        *_device,
+        *_stagingBuffer,
+        _swapchain->getFormat(),
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+    );
+    _textureImageView = std::make_unique<ImageView>(
+        _device,
+        *_image,
+        _swapchain->getFormat(),
+        VK_IMAGE_ASPECT_COLOR_BIT
+    );
 
     _uniformBuffers.reserve(MAX_FRAMES_IN_FLIGHT);
     for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
@@ -207,8 +228,22 @@ void Instance::createBuffers()
         bufferInfo.buffer = _uniformBuffers[i].getPrimitive();
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(UniformBufferObject);
-        _descriptorSets->write(i, bufferInfo);
+
+        VkDescriptorImageInfo imageInfo{};
+        imageInfo.sampler = _textureSampler->getPrimitive();
+        imageInfo.imageView = _textureImageView->getPrimitive();
+        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+        _descriptorSets->write(i, bufferInfo, imageInfo);
     }
+
+    _commandBuffers->transitionImageLayout(*_image, 
+        VK_IMAGE_LAYOUT_UNDEFINED, 
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    _stagingBuffer->copyToImage(_commandPool, *_image);
+    _commandBuffers->transitionImageLayout(*_image, 
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 
@@ -227,7 +262,7 @@ std::unique_ptr<Surface>  &Instance::getSurface()
     return _surface;
 }
 
-std::unique_ptr<Window> &Instance::getWindow()
+std::unique_ptr<GWindow> &Instance::getWindow()
 {
     return _window;
 }
@@ -267,7 +302,7 @@ std::unique_ptr<Buffer> &Instance::getVertexBuffer()
     return _vertexBuffer;
 }
 
-std::vector<uint16_t> &Instance::getIndices()
+std::vector<uint32_t> &Instance::getIndices()
 {
     return _indices;
 }
@@ -312,4 +347,14 @@ std::unique_ptr<DescriptorPool> &Instance::getDescriptorPool()
 std::unique_ptr<DescriptorSets> &Instance::getDescriptorSets()
 {
     return _descriptorSets;
+}
+
+std::unique_ptr<TextureSampler> &Instance::getTextureSampler()
+{
+    return _textureSampler;
+}
+
+std::unique_ptr<Image> &Instance::getImage()
+{
+    return _image;
 }
