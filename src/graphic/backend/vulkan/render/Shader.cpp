@@ -1,5 +1,6 @@
 #include "Shader.hpp"
 #include <iostream>
+#include <string.h>
 
 Shader::Shader(std::unique_ptr<Device> &device, const std::vector<char> code) : _code(code), _device(device)
 {
@@ -14,8 +15,16 @@ Shader::Shader(std::unique_ptr<Device> &device, const std::vector<char> code) : 
 std::vector<char> Shader::readFile(const std::string &filename)
 {
     std::ifstream file(filename, std::ios::ate | std::ios::binary);
-    if (!file.is_open())
-        throw std::runtime_error("failed to open file!");
+    if (!file.is_open()) {
+        char error[1024];
+        #ifdef _WIN32
+            strerror_s(error, sizeof(error), errno);
+        #else
+            strerror_r(errno, error, sizeof(error));
+        #endif
+        std::string errorString(error);
+        throw std::runtime_error(errorString + " => " + filename);
+    }
     size_t fileSize = (size_t) file.tellg();
     std::vector<char> code;
     code.resize(fileSize);

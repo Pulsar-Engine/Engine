@@ -5,7 +5,7 @@
     #include "DebugUtilsMessengerEXT.hpp"
     #include "Device.hpp"
     #include "Surface.hpp"
-    #include "../../Window.hpp"
+    #include "../../GWindow.hpp"
     #include "Swapchain.hpp"
     #include "ImageView.hpp"
     #include "render/RenderPass.hpp"
@@ -48,7 +48,7 @@ const std::vector<const char*> validationLayers = {
 
 class Instance : public Primitive<VkInstance> {
     public:
-        Instance(const char *title);
+        Instance(const char *title, bool fromEditor = false);
         ~Instance();
         bool checkValidationLayerSupport();
         std::vector<const char *> getRequiredExtensions();
@@ -60,7 +60,7 @@ class Instance : public Primitive<VkInstance> {
         std::unique_ptr<PhysicalDevice> &getPhysicalDevice();
         std::unique_ptr<Device> &getDevice();
         std::unique_ptr<Surface> &getSurface();
-        std::unique_ptr<Window> &getWindow();
+        std::unique_ptr<GWindow> &getWindow();
         std::unique_ptr<Swapchain> &getSwapchain();
         std::vector<ImageView> &getImageViews();
         std::unique_ptr<DescriptorSetLayout> &getDescriptorSetLayout();
@@ -89,7 +89,7 @@ class Instance : public Primitive<VkInstance> {
         std::unique_ptr<Device> _device;
         std::unique_ptr<Surface> _surface;
         std::unique_ptr<DebugUtilsMessengerEXT> _debugMessenger;
-        std::unique_ptr<Window> _window;
+        std::unique_ptr<GWindow> _window;
         std::unique_ptr<Swapchain> _swapchain;
         std::vector<ImageView> _imageViews;
         std::unique_ptr<DescriptorSetLayout> _descriptorSetLayout;

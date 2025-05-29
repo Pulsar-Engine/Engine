@@ -1,7 +1,7 @@
 #include "Instance.hpp"
 #include "render/Model.hpp"
 
-Instance::Instance(const char *title)
+Instance::Instance(const char *title, bool fromEditor)
 {
     if constexpr(enableValidationLayers) {
         if (!checkValidationLayerSupport())
@@ -50,7 +50,7 @@ Instance::Instance(const char *title)
     _indices = model.getIndices();
     if (_debugMessenger.get())
         _debugMessenger->setup(&_primitive);
-    _window = std::make_unique<Window>(800, 600, title);
+    _window = std::make_unique<GWindow>(800, 600, title, fromEditor);
     _surface = std::make_unique<Surface>(&_primitive, _window->getPrimitive());
     _physicalDevice = std::make_unique<PhysicalDevice>(_primitive, _surface);
     _device = std::make_unique<Device>(_physicalDevice);
@@ -87,17 +87,17 @@ VkBool32 Instance::debugCallback(
 
 Instance::~Instance()
 {
+    this->_commandBuffers.reset();
+    cleanupSwapchain();
+    this->_image.reset();
     this->_stagingBuffer.reset();
     this->_uniformBuffers.clear();
-    this->_commandBuffers.reset();
     this->_textureSampler.reset();
     this->_textureImageView.reset();
     this->_depthResources.reset();
     this->_indexBuffer.reset();
     this->_vertexBuffer.reset();
     this->_commandPool.reset();
-    cleanupSwapchain();
-    this->_image.reset();
     this->_graphicsPipeline.reset();
     this->_descriptorPool.reset();
     this->_descriptorSetLayout.reset();
@@ -262,7 +262,7 @@ std::unique_ptr<Surface>  &Instance::getSurface()
     return _surface;
 }
 
-std::unique_ptr<Window> &Instance::getWindow()
+std::unique_ptr<GWindow> &Instance::getWindow()
 {
     return _window;
 }

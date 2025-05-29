@@ -8,7 +8,7 @@
 #include <glm/mat4x4.hpp>
 #include <chrono>
 
-#include "graphic/backend/vulkan/Instance.hpp"
+#include "Engine.hpp"
 
 bool simpleWindowVulkan(void)
 {
@@ -17,9 +17,6 @@ bool simpleWindowVulkan(void)
     GLFWwindow* window = glfwCreateWindow(800, 600, "Vulkan window", nullptr, nullptr);
     uint32_t extensionCount = 0;
     vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-    glm::mat4 matrix;
-    glm::vec4 vec;
-    auto test = matrix * vec;
     std::chrono::time_point<std::chrono::high_resolution_clock> lastTime = std::chrono::high_resolution_clock::now();
     while(!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -35,21 +32,26 @@ bool simpleWindowVulkan(void)
 
 bool my_imp()
 {
-    Instance instance("Vulkan window");
-    instance.getWindow()->loop(instance);
+    Engine::initWindow(false);
+    Engine::render();
+    Engine::destroyWindow();
     return (true);
 }
 
 constexpr bool (*tests[])(void) = {
     simpleWindowVulkan,
     my_imp,
+    nullptr
 };
 
 int main(int argc, char **argv)
 {
     int test = -1;
-    if (argc == 2)
-        test = std::stoi(argv[1]);
+    if (argc == 2) {
+        try {
+            test = std::stoi(argv[1]);
+        } catch(const std::exception &) {}
+    }
     for (int i = 0; tests[i] != nullptr; i++) {
         if (test == -1)
             tests[i]();

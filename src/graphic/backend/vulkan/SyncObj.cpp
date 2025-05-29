@@ -16,6 +16,7 @@ SyncObj::SyncObj(std::unique_ptr<Device> &device) : _device(device)
 
 SyncObj::~SyncObj()
 {
+    vkDeviceWaitIdle(_device->getPrimitive());
     vkDestroySemaphore(_device->getPrimitive(), _imageAvailableSemaphore, nullptr);
     vkDestroySemaphore(_device->getPrimitive(), _renderFinishedSemaphore, nullptr);
     vkDestroyFence(_device->getPrimitive(), _inFlightFence, nullptr);

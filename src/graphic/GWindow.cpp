@@ -1,11 +1,19 @@
 
-#include "Window.hpp"
+#include "GWindow.hpp"
+#include "GWindow.hpp"
 #include "backend/vulkan/Instance.hpp"
 
-Window::Window(const int width, const int height, const char *title) : _width(width), _height(height), _title(title), _currentFrame(0) {
+GWindow *GWindow::_instance = nullptr;
+
+GWindow::GWindow(const int width, const int height, const char *title, bool fromEditor) : _width(width), _height(height), _title(title), _currentFrame(0) {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
+    if (fromEditor) {
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+        glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+    }
     _cameraPos = glm::vec3(0.0f, -3.0f, 1.5f);
     _cameraFront = glm::vec3(0.0f, 1.0f, -0.5f);
     _cameraUp = glm::vec3(0.0f, 0.0f, 1.0f);
@@ -21,41 +29,37 @@ Window::Window(const int width, const int height, const char *title) : _width(wi
     _framebufferResized = false;
     glfwSetWindowUserPointer(_primitive, this);
     glfwSetFramebufferSizeCallback(_primitive, [](GLFWwindow* window, int width, int height) {
-        auto app = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+        auto app = reinterpret_cast<GWindow*>(glfwGetWindowUserPointer(window));
         app->callbackResize(window, width, height);
     });
-    //glfwSetInputMode(_primitive, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    if (_instance == nullptr)
+        _instance = this;
+    else
+        throw std::runtime_error("Window instance already exists!");
     glfwSetCursorPosCallback(_primitive, [](GLFWwindow* window, double xpos, double ypos) {
-        auto app = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+        auto app = reinterpret_cast<GWindow*>(glfwGetWindowUserPointer(window));
         app->onMouseMove(xpos, ypos);
     });
 }
 
-void Window::onMouseMove(double xpos, double ypos) {
+void GWindow::onMouseMove(double xpos, double ypos) {
     if (_firstMouse) {
         _lastX = xpos;
         _lastY = ypos;
         _firstMouse = false;
         return;
     }
-
     double xoffset = _lastX - xpos;
-    double yoffset = _lastY - ypos; // Inversé car y va du bas vers le haut
+    double yoffset = _lastY - ypos;
     _lastX = xpos;
     _lastY = ypos;
-
     const float sensitivity = 0.1f;
     xoffset *= sensitivity;
     yoffset *= sensitivity;
-
     _yaw   += static_cast<float>(xoffset);
     _pitch += static_cast<float>(yoffset);
-
-    // Clamp pitch pour éviter le flip vertical
     if (_pitch > 89.0f) _pitch = 89.0f;
     if (_pitch < -89.0f) _pitch = -89.0f;
-
-    // Correction du calcul de la direction de la caméra
     glm::vec3 direction;
     direction.x = cos(glm::radians(_yaw)) * cos(glm::radians(_pitch));
     direction.y = sin(glm::radians(_yaw)) * cos(glm::radians(_pitch));
@@ -63,18 +67,21 @@ void Window::onMouseMove(double xpos, double ypos) {
     _cameraFront = glm::normalize(direction);
 }
 
-void Window::callbackResize(GLFWwindow *window, int width, int height) {
+void GWindow::callbackResize(GLFWwindow *window, int width, int height) {
     (void) window;
     (void) width;
     (void) height;
     _framebufferResized = true;
 }
 
-void Window::loop(Instance &instance) {
+void GWindow::loop(Instance &instance) {
+    _finished = false;
     float cameraSpeed = 2.5f;
     double lastFrameTime = glfwGetTime();
-
-    while (!glfwWindowShouldClose(_primitive)) {
+    while (!glfwWindowShouldClose(_primitive) && !_finished) {
+        instance.getDevice()->waitIdle();
+        if (_paused)
+            continue;
         double currentTime = glfwGetTime();
         float deltaTime = static_cast<float>(currentTime - lastFrameTime);
         lastFrameTime = currentTime;
@@ -93,10 +100,9 @@ void Window::loop(Instance &instance) {
         glfwPollEvents();
         drawFrame(instance);
     }
-    instance.getDevice()->waitIdle();
 }
 
-void Window::drawFrame(Instance &instance) {
+void GWindow::drawFrame(Instance &instance) {
     SyncObj &syncObj = instance.getCommandBuffers()->getSyncObjs()[_currentFrame];
     VkCommandBuffer &commandBuffer = instance.getCommandBuffers()->getCommandBuffers()[_currentFrame];
     vkWaitForFences(instance.getDevice()->getPrimitive(), 1, &syncObj.getInFlightFence(), VK_TRUE, UINT64_MAX);
@@ -160,8 +166,7 @@ void Window::drawFrame(Instance &instance) {
     _currentFrame = (_currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-
-void Window::updateUniformBuffer(Buffer &uniformBuffer) {
+void GWindow::updateUniformBuffer(Buffer &uniformBuffer) {
     UniformBufferObject ubo = {};
     ubo.model = glm::mat4(1.0f);
     ubo.view = glm::lookAt(_cameraPos, _cameraPos + _cameraFront, _cameraUp);
@@ -175,9 +180,28 @@ void Window::updateUniformBuffer(Buffer &uniformBuffer) {
     uniformBuffer.copyData(&ubo);
 }
 
-Window::~Window() {
+GWindow::~GWindow() {
     if (_primitive == nullptr)
         return;
     glfwDestroyWindow(_primitive);
     glfwTerminate();
+}
+
+GWindow *GWindow::getInstance() {
+    return _instance;
+}
+
+void GWindow::close() {
+    _finished = true;
+}
+
+void GWindow::togglePause() {
+    _paused = !_paused;
+}
+
+void GWindow::toggleShow() {
+    if (glfwGetWindowAttrib(_primitive, GLFW_VISIBLE))
+        glfwHideWindow(_primitive);
+    else
+        glfwShowWindow(_primitive);
 }
