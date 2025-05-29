@@ -1,4 +1,5 @@
 #include "Image.hpp"
+#include "../Instance.hpp"
 
 Image::Image(Instance &instance,
     TextureImage &textureImage,
@@ -7,17 +8,31 @@ Image::Image(Instance &instance,
     VkFormat format,
     VkImageTiling tiling,
     VkImageUsageFlags usage,
-    VkMemoryPropertyFlags properties) : _device(device)
+    VkMemoryPropertyFlags properties) : Image(instance, textureImage.getWidth(), textureImage.getHeight(), device, stagingBuffer, format, tiling, usage, properties)
+{
+
+}
+
+Image::Image(Instance &instance,
+    int width,
+    int height,
+    Device &device,
+    Buffer &stagingBuffer,
+    VkFormat format,
+    VkImageTiling tiling,
+    VkImageUsageFlags usage,
+    VkMemoryPropertyFlags properties)
+    : _device(device), _width(width), _height(height), _format(format)
 {
     VkImageCreateInfo imageInfo{};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     imageInfo.imageType = VK_IMAGE_TYPE_2D;
-    imageInfo.extent.width = textureImage.getWidth();
-    imageInfo.extent.height = textureImage.getHeight();
+    imageInfo.extent.width = _width;
+    imageInfo.extent.height = _height;
     imageInfo.extent.depth = 1;
     imageInfo.mipLevels = 1;
     imageInfo.arrayLayers = 1;
-    imageInfo.format =  format;
+    imageInfo.format = format;
     imageInfo.tiling = tiling;
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     imageInfo.usage = usage;
@@ -33,4 +48,19 @@ Image::Image(Instance &instance,
 Image::~Image()
 {
     vkDestroyImage(_device.getPrimitive(), _primitive, nullptr);
+}
+
+int Image::getWidth() const
+{
+    return _width;
+}
+
+int Image::getHeight() const
+{
+    return _height;
+}
+
+VkFormat Image::getFormat() const
+{
+    return _format;
 }

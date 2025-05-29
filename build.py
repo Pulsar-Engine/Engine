@@ -1,4 +1,8 @@
-import os, sys, shutil
+import os
+import sys
+import shutil
+
+to_restore = []
 
 
 def execute(command, returnIfError=False):
@@ -11,29 +15,32 @@ def execute(command, returnIfError=False):
         return code
 
 
+def backup_and_move(path, backup_path):
+    global to_restore
+    if os.path.exists(path):
+        shutil.move(path, backup_path)
+        to_restore.append((backup_path, path))
+
+
+def restore_files():
+    global to_restore
+    for backup_path, original_path in to_restore:
+        if os.path.exists(backup_path):
+            shutil.move(backup_path, original_path)
+
+
 if len(sys.argv) == 1 or sys.argv[1] not in ["Debug", "Release"]:
     print("Usage: python3 build.py <Debug|Release>")
     sys.exit(1)
 
-vscode = os.path.exists(".vscode")
-shaders = os.path.exists("shaders")
-textures = os.path.exists("textures")
-
-if vscode:
-    shutil.move(".vscode", "b.vscode")
-if shaders:
-    shutil.move("shaders", "b.shaders")
-if textures:
-    shutil.move("textures", "b.textures")
+backup_and_move(".vscode", "b.vscode")
+backup_and_move("shaders", "b.shaders")
+backup_and_move("textures", "b.textures")
+backup_and_move("models", "b.models")
 
 result = execute("git clean -Xfd", True)
 
-if vscode:
-    shutil.move("b.vscode", ".vscode")
-if shaders:
-    shutil.move("b.shaders", "shaders")
-if textures:
-    shutil.move("b.textures", "textures")
+restore_files()
 
 if result != 0:
     print("Failed to clean the repository")

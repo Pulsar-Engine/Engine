@@ -21,6 +21,9 @@ Device::Device(std::unique_ptr<PhysicalDevice> &physicalDevice) : _physicalDevic
     createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
     createInfo.ppEnabledExtensionNames = deviceExtensions.data();
     createInfo.pQueueCreateInfos = queueCreateInfos.data();
+    VkPhysicalDeviceFeatures deviceFeatures{};
+    deviceFeatures.samplerAnisotropy = VK_TRUE;
+    createInfo.pEnabledFeatures = &deviceFeatures;
     if (vkCreateDevice(_physicalDevice->getPrimitive(), &createInfo, nullptr, &_primitive) != VK_SUCCESS)
         throw std::runtime_error("failed to create logical device!");
     vkGetDeviceQueue(_primitive, indices.graphicsFamily.value(), 0, &_graphicsQueue);

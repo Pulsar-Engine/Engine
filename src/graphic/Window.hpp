@@ -15,6 +15,7 @@
 
 class Instance;
 
+
 class Window : public Primitive<GLFWwindow *> {
     public:
         Window() = default;
@@ -25,6 +26,7 @@ class Window : public Primitive<GLFWwindow *> {
         void drawFrame(Instance &instance);
         void callbackResize(GLFWwindow *window, int width, int height);
         void updateUniformBuffer(Buffer &uniformBuffer);
+        void onMouseMove(double xpos, double ypos);
     protected:
     private:
         int _width;
@@ -32,6 +34,16 @@ class Window : public Primitive<GLFWwindow *> {
         const char *_title;
         uint32_t _currentFrame;
         bool _framebufferResized;
+        glm::vec3 _cameraPos;
+        glm::vec3 _cameraFront;
+        glm::vec3 _cameraUp;
+        float _yaw;
+        float _pitch;
+        float _fov;
+        bool _firstMouse;
+        double _lastY;
+        double _lastX;
+        bool _cursorDisabled;
 };
 
 #endif

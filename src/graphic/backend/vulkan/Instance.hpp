@@ -20,6 +20,8 @@
     #include "DescriptorPool.hpp"
     #include "DescriptorSets.hpp"
     #include "render/TextureImage.hpp"
+    #include "render/TextureSampler.hpp"
+    #include "render/DepthResources.hpp"
 
     #include <memory>
     #include <GLFW/glfw3.h>
@@ -68,11 +70,14 @@ class Instance : public Primitive<VkInstance> {
         std::unique_ptr<CommandBuffers> &getCommandBuffers();
         std::unique_ptr<Buffer> &getVertexBuffer();
         std::vector<Vertex> &getVertices();
-        std::vector<uint16_t> &getIndices();
+        std::vector<uint32_t> &getIndices();
         std::unique_ptr<Buffer> &getIndexBuffer();
         std::vector<Buffer> &getUniformBuffers();
+        std::unique_ptr<DepthResources> &getDepthResources();
         std::unique_ptr<DescriptorPool> &getDescriptorPool();
         std::unique_ptr<DescriptorSets> &getDescriptorSets();
+        std::unique_ptr<TextureSampler> &getTextureSampler();
+        std::unique_ptr<Image> &getImage();
         void recreateSwapchain();
         void cleanupSwapchain();
         void createBuffers();
@@ -99,7 +104,12 @@ class Instance : public Primitive<VkInstance> {
         std::unique_ptr<DescriptorSets> _descriptorSets;
         std::vector<Buffer> _uniformBuffers;
         std::vector<Vertex> _vertices;
-        std::vector<uint16_t> _indices;
+        std::vector<uint32_t> _indices;
+        std::unique_ptr<TextureSampler> _textureSampler;
+        std::unique_ptr<Image> _image;
+        std::unique_ptr<TextureImage> _textureImage;
+        std::unique_ptr<ImageView> _textureImageView;
+        std::unique_ptr<DepthResources> _depthResources;
 };
 
 #endif

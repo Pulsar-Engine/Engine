@@ -7,6 +7,8 @@
 class SyncObj;
 
 class Instance;
+class Image;
+
 class CommandBuffers {
     public:
         CommandBuffers(std::unique_ptr<Device> &device, std::unique_ptr<CommandPool> &commandPool);
@@ -16,7 +18,8 @@ class CommandBuffers {
         std::vector<SyncObj> &getSyncObjs();
         static VkCommandBuffer beginSingleTimeCommands(std::unique_ptr<Device> &device, std::unique_ptr<CommandPool> &commandPool);
         static void endSingleTimeCommands(std::unique_ptr<Device> &device, std::unique_ptr<CommandPool> &commandPool, VkCommandBuffer commandBuffer);
-    protected:
+        void transitionImageLayout(Image &image, VkImageLayout oldLayout, VkImageLayout newLayout);
+        protected:
     private:
         std::unique_ptr<Device> &_device;
         std::unique_ptr<CommandPool> &_commandPool;

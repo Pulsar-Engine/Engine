@@ -6,9 +6,12 @@
 
     #include <vector>
 
+class Image;
+
 class ImageView : public Primitive<VkImageView> {
     public:
-        ImageView(std::unique_ptr<Device> &device, VkImage &image, VkFormat &format);
+        ImageView(std::unique_ptr<Device> &device, VkImage &image, VkFormat format, VkImageAspectFlags aspectFlags);
+        ImageView(std::unique_ptr<Device> &device, Image &image, VkFormat format, VkImageAspectFlags aspectFlags);
         ~ImageView();
     protected:
     private:

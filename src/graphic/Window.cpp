@@ -6,13 +6,61 @@ Window::Window(const int width, const int height, const char *title) : _width(wi
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    _cameraPos = glm::vec3(0.0f, -3.0f, 1.5f);
+    _cameraFront = glm::vec3(0.0f, 1.0f, -0.5f);
+    _cameraUp = glm::vec3(0.0f, 0.0f, 1.0f);
+    _yaw = glm::degrees(atan2(_cameraFront.y, _cameraFront.x));
+    _pitch = glm::degrees(asin(_cameraFront.z));
+    _fov = 45.0f;
+    _firstMouse = true;
+    _lastX = _width / 2.0;
+    _lastY = _height / 2.0;
+    _cursorDisabled = false;
     _primitive = glfwCreateWindow(width, height, title, nullptr, nullptr);
+    glfwSetInputMode(_primitive, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     _framebufferResized = false;
     glfwSetWindowUserPointer(_primitive, this);
     glfwSetFramebufferSizeCallback(_primitive, [](GLFWwindow* window, int width, int height) {
         auto app = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
         app->callbackResize(window, width, height);
     });
+    //glfwSetInputMode(_primitive, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetCursorPosCallback(_primitive, [](GLFWwindow* window, double xpos, double ypos) {
+        auto app = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+        app->onMouseMove(xpos, ypos);
+    });
+}
+
+void Window::onMouseMove(double xpos, double ypos) {
+    if (_firstMouse) {
+        _lastX = xpos;
+        _lastY = ypos;
+        _firstMouse = false;
+        return;
+    }
+
+    double xoffset = _lastX - xpos;
+    double yoffset = _lastY - ypos; // Inversé car y va du bas vers le haut
+    _lastX = xpos;
+    _lastY = ypos;
+
+    const float sensitivity = 0.1f;
+    xoffset *= sensitivity;
+    yoffset *= sensitivity;
+
+    _yaw   += static_cast<float>(xoffset);
+    _pitch += static_cast<float>(yoffset);
+
+    // Clamp pitch pour éviter le flip vertical
+    if (_pitch > 89.0f) _pitch = 89.0f;
+    if (_pitch < -89.0f) _pitch = -89.0f;
+
+    // Correction du calcul de la direction de la caméra
+    glm::vec3 direction;
+    direction.x = cos(glm::radians(_yaw)) * cos(glm::radians(_pitch));
+    direction.y = sin(glm::radians(_yaw)) * cos(glm::radians(_pitch));
+    direction.z = sin(glm::radians(_pitch));
+    _cameraFront = glm::normalize(direction);
 }
 
 void Window::callbackResize(GLFWwindow *window, int width, int height) {
@@ -23,7 +71,25 @@ void Window::callbackResize(GLFWwindow *window, int width, int height) {
 }
 
 void Window::loop(Instance &instance) {
+    float cameraSpeed = 2.5f;
+    double lastFrameTime = glfwGetTime();
+
     while (!glfwWindowShouldClose(_primitive)) {
+        double currentTime = glfwGetTime();
+        float deltaTime = static_cast<float>(currentTime - lastFrameTime);
+        lastFrameTime = currentTime;
+        if (glfwGetKey(_primitive, GLFW_KEY_W) == GLFW_PRESS)
+            _cameraPos += cameraSpeed * _cameraFront * deltaTime;
+        if (glfwGetKey(_primitive, GLFW_KEY_S) == GLFW_PRESS)
+            _cameraPos -= cameraSpeed * _cameraFront * deltaTime;
+        if (glfwGetKey(_primitive, GLFW_KEY_A) == GLFW_PRESS)
+            _cameraPos -= glm::normalize(glm::cross(_cameraFront, _cameraUp)) * cameraSpeed * deltaTime;
+        if (glfwGetKey(_primitive, GLFW_KEY_D) == GLFW_PRESS)
+            _cameraPos += glm::normalize(glm::cross(_cameraFront, _cameraUp)) * cameraSpeed * deltaTime;
+        if (glfwGetKey(_primitive, GLFW_KEY_SPACE) == GLFW_PRESS)
+            _cameraPos += _cameraUp * cameraSpeed * deltaTime;
+        if (glfwGetKey(_primitive, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+            _cameraPos -= _cameraUp * cameraSpeed * deltaTime;
         glfwPollEvents();
         drawFrame(instance);
     }
@@ -33,7 +99,6 @@ void Window::loop(Instance &instance) {
 void Window::drawFrame(Instance &instance) {
     SyncObj &syncObj = instance.getCommandBuffers()->getSyncObjs()[_currentFrame];
     VkCommandBuffer &commandBuffer = instance.getCommandBuffers()->getCommandBuffers()[_currentFrame];
-
     vkWaitForFences(instance.getDevice()->getPrimitive(), 1, &syncObj.getInFlightFence(), VK_TRUE, UINT64_MAX);
 
     uint32_t imageIndex;
@@ -54,10 +119,8 @@ void Window::drawFrame(Instance &instance) {
     }
 
     vkResetFences(instance.getDevice()->getPrimitive(), 1, &syncObj.getInFlightFence());
-
     instance.getCommandBuffers()->record(instance, imageIndex, _currentFrame);
     updateUniformBuffer(instance.getUniformBuffers()[_currentFrame]);
-
     VkSubmitInfo submitInfo = {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submitInfo.waitSemaphoreCount = 1;
@@ -97,20 +160,16 @@ void Window::drawFrame(Instance &instance) {
     _currentFrame = (_currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
+
 void Window::updateUniformBuffer(Buffer &uniformBuffer) {
-    static auto startTime = std::chrono::high_resolution_clock::now();
-
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-
     UniformBufferObject ubo = {};
-    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.model = glm::mat4(1.0f);
+    ubo.view = glm::lookAt(_cameraPos, _cameraPos + _cameraFront, _cameraUp);
     ubo.proj = glm::perspective(
-        glm::radians(45.0f),
-        800.0f / 600.0f,
+        glm::radians(_fov),
+        static_cast<float>(_width) / static_cast<float>(_height),
         0.1f,
-        10.0f
+        100.0f
     );
     ubo.proj[1][1] *= -1;
     uniformBuffer.copyData(&ubo);

@@ -8,10 +8,13 @@ TextureImage::TextureImage(const char *path)
     _pixels = stbi_load(path, &_width, &_height, &_channels, STBI_rgb_alpha);
     if (!_pixels)
         throw std::runtime_error("failed to load texture image!");
+    _channels = STBI_rgb_alpha;
 }
 
 TextureImage::~TextureImage()
 {
+    if (_pixels == nullptr)
+        return;
     stbi_image_free(_pixels);
 }
 
@@ -38,5 +41,11 @@ stbi_uc * TextureImage::getPixels() const
 VkDeviceSize TextureImage::getSize() const
 {
     return _width * _height * _channels;
+}
+
+void TextureImage::freePixels()
+{
+    stbi_image_free(_pixels);
+    _pixels = nullptr;
 }
 

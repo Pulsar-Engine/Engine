@@ -3,6 +3,7 @@
 
     #include "Primitive.hpp"
     #include "Device.hpp"
+    #include <array>
 
 class DescriptorSetLayout : public Primitive<VkDescriptorSetLayout> {
     public:

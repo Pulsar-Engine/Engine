@@ -2,7 +2,7 @@
 #include "GraphicsPipeline.hpp"
 #include "Vertex.hpp"
 
-GraphicsPipeline::GraphicsPipeline(std::unique_ptr<Device> &device, std::unique_ptr<DescriptorSetLayout> &descriptorSetLayout, std::unique_ptr<Swapchain> &swapchain) : _device(device)
+GraphicsPipeline::GraphicsPipeline(PhysicalDevice &physicalDevice, std::unique_ptr<Device> &device, std::unique_ptr<DescriptorSetLayout> &descriptorSetLayout, std::unique_ptr<Swapchain> &swapchain) : _device(device)
 {
     Shader vert(_device, "shaders/vert.spv");
     Shader frag(_device, "shaders/frag.spv");
@@ -108,6 +108,18 @@ GraphicsPipeline::GraphicsPipeline(std::unique_ptr<Device> &device, std::unique_
     colorBlending.blendConstants[2] = 0.0f;
     colorBlending.blendConstants[3] = 0.0f;
 
+    VkPipelineDepthStencilStateCreateInfo depthStencil{};
+    depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depthStencil.depthTestEnable = VK_TRUE;
+    depthStencil.depthWriteEnable = VK_TRUE;
+    depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+    depthStencil.depthBoundsTestEnable = VK_FALSE;
+    depthStencil.minDepthBounds = 0.0f;
+    depthStencil.maxDepthBounds = 1.0f;
+    depthStencil.stencilTestEnable = VK_FALSE;
+    depthStencil.front = {};
+    depthStencil.back = {};
+
     VkDescriptorSetLayout layout = descriptorSetLayout->getPrimitive();
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -120,7 +132,7 @@ GraphicsPipeline::GraphicsPipeline(std::unique_ptr<Device> &device, std::unique_
         throw std::runtime_error("failed to create pipeline layout!");
     }
 
-    _renderPass = std::make_unique<RenderPass>(_device, swapchain->getFormat());
+    _renderPass = std::make_unique<RenderPass>(physicalDevice, _device, swapchain->getFormat());
 
     VkGraphicsPipelineCreateInfo pipelineInfo{};
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -131,7 +143,7 @@ GraphicsPipeline::GraphicsPipeline(std::unique_ptr<Device> &device, std::unique_
     pipelineInfo.pViewportState = &viewportState;
     pipelineInfo.pRasterizationState = &rasterizer;
     pipelineInfo.pMultisampleState = &multisampling;
-    pipelineInfo.pDepthStencilState = nullptr;
+    pipelineInfo.pDepthStencilState = &depthStencil;
     pipelineInfo.pColorBlendState = &colorBlending;
     pipelineInfo.pDynamicState = &dynamicState;
     pipelineInfo.layout = pipelineLayout;

@@ -15,6 +15,7 @@ class TextureImage {
         int getChannels() const;
         stbi_uc * getPixels() const;
         VkDeviceSize getSize() const;
+        void freePixels();
     protected:
     private:
         int _width;
