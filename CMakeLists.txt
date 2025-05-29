@@ -31,6 +31,8 @@ target_link_libraries(pulsar-engine-static PUBLIC Vulkan::Vulkan glfw glm::glm)
 
 add_library(pulsar-engine SHARED ${ENGINE_SRC})
 
+set_target_properties(pulsar-engine PROPERTIES CXX_VISIBILITY_PRESET hidden VISIBILITY_INLINES_HIDDEN ON)
+
 if (WIN32)
     target_compile_definitions(pulsar-engine PUBLIC PULSAR_PLATFORM_WINDOWS)
     target_compile_definitions(pulsar-engine PUBLIC PULSAR_ENGINE_EXPORTS)
@@ -40,7 +42,6 @@ target_include_directories(pulsar-engine PUBLIC ./src ./libs/stb ./libs/tiny_obj
 target_link_libraries(pulsar-engine PUBLIC Vulkan::Vulkan glfw glm::glm)
 
 enable_testing()
-
 
 FILE(GLOB_RECURSE TEST_SRC ./test/*.cpp)
 

@@ -17,9 +17,6 @@ bool simpleWindowVulkan(void)
     GLFWwindow* window = glfwCreateWindow(800, 600, "Vulkan window", nullptr, nullptr);
     uint32_t extensionCount = 0;
     vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-    glm::mat4 matrix;
-    glm::vec4 vec;
-    auto test = matrix * vec;
     std::chrono::time_point<std::chrono::high_resolution_clock> lastTime = std::chrono::high_resolution_clock::now();
     while(!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -53,7 +50,7 @@ int main(int argc, char **argv)
     if (argc == 2) {
         try {
             test = std::stoi(argv[1]);
-        } catch(std::exception error) {}
+        } catch(const std::exception &) {}
     }
     for (int i = 0; tests[i] != nullptr; i++) {
         if (test == -1)

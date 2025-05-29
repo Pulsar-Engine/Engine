@@ -1,5 +1,6 @@
 
 #include "GWindow.hpp"
+#include "GWindow.hpp"
 #include "backend/vulkan/Instance.hpp"
 
 GWindow *GWindow::_instance = nullptr;
