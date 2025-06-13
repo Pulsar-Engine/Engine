@@ -1,0 +1,43 @@
+name: ci
+run-name: CI - Engine
+on: push
+jobs:
+  build-and-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        python-version: ["3.10"]
+        cmake-version: ["3.26.0"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: ${{ matrix.cmake-version }}
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install conan
+        run: pip install conan
+      - name: Cache pip and conan dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.conan
+          key: ${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.cmake-version }}-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.cmake-version }}-
+      - name: Build project
+        run: python3 build.py Release
+      - name: Install Vulkan SDK (Windows only)
+        if: runner.os == 'Windows'
+        uses: humbletim/setup-vulkan-sdk@523828e49cd4afabce369c39c7ee6543a2b7a735
+        with:
+          vulkan-query-version: 1.3.204.0
+          vulkan-components: Vulkan-Headers, Vulkan-Loader
+          vulkan-use-cache: true
+      - name: Test project
+        run: ctest -C Release

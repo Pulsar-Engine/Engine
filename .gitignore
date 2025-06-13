@@ -14,8 +14,9 @@ x86/
 build/
 **/.vs/
 conan*
-!conanfile.txt
+!conanfile.py
 CMakePresets.json
+pulsar-engine-*
 *.bat
 !build.sh
 *.sh
@@ -23,3 +24,7 @@ CMakePresets.json
 **/*.a
 **/m3
 .vscode/
+Testing/
+shaders/
+textures/
+models/
