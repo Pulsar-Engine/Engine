@@ -5,7 +5,6 @@
     #include <vector>
     #include <unordered_map>
     
-
 class Model {
     public:
         Model(const char *path);

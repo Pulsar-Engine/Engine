@@ -1,4 +1,3 @@
-
 #include "GWindow.hpp"
 #include "GWindow.hpp"
 #include "backend/vulkan/Instance.hpp"
