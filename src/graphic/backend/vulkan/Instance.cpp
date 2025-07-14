@@ -51,13 +51,7 @@ Instance::Instance(const char *title, bool fromEditor)
     }
     if (requiredExtensions.size() != 0)
         throw std::runtime_error("failed to find required extensions!");
-    
-    // Initialize mesh manager
     _meshManager = std::make_unique<MeshManager>();
-    
-    // Add a default mesh (viking room)
-    // Note: This will be replaced by the user adding their own meshes
-    
     if (_debugMessenger.get())
         _debugMessenger->setup(&_primitive);
     _window = std::make_unique<GWindow>(800, 600, title, fromEditor);
@@ -78,19 +72,10 @@ Instance::Instance(const char *title, bool fromEditor)
     _frameBuffers = std::make_unique<FrameBuffers>(_graphicsPipeline, *_depthResources, _device, _imageViews, _swapchain->getExtent());
     _textureSampler = std::make_unique<TextureSampler>(_device, *_physicalDevice);
     
-    // Add multiple meshes for testing
     try {
-        // Pour le moment, utilisons le fallback car le système Mesh a besoin d'adjustements
         createBuffers();
-        
-        // TODO: Activer le système MeshManager une fois tous les bugs corrigés
-        // addMesh("models/viking_room.obj", "textures/viking_room.png");
-        // addMesh("models/viking_room.obj", "textures/viking_room.png", glm::vec3(2.0f, 0.0f, 0.0f));
-        // addMesh("models/viking_room.obj", "textures/viking_room.png", glm::vec3(-2.0f, 0.0f, 0.0f), glm::vec3(0.0f, 45.0f, 0.0f));
     } catch (const std::exception& e) {
         std::cerr << "Error adding mesh: " << e.what() << std::endl;
-        // For now, fall back to the old system if mesh loading fails
-        createBuffers();
     }
 }
 
@@ -279,7 +264,6 @@ std::unique_ptr<TextureSampler> &Instance::getTextureSampler()
     return _textureSampler;
 }
 
-// Fallback getters for compatibility
 std::unique_ptr<Buffer> &Instance::getVertexBuffer()
 {
     return _vertexBuffer;
@@ -327,110 +311,8 @@ void Instance::addMesh(const char *modelPath, const char *texturePath, glm::vec3
 
 void Instance::createBuffers()
 {
-    // Load the base model
-    Model model("models/viking_room.obj");
-    const std::vector<Vertex> &baseVertices = model.getVertices();
-    const std::vector<uint32_t> &baseIndices = model.getIndices();
-    
-    // Create multiple instances by duplicating vertices with different positions
-    _vertices.clear();
-    _indices.clear();
-    
-    // Position offsets for multiple instances
-    std::vector<glm::vec3> positions = {
-        glm::vec3(0.0f, 0.0f, 0.0f),    // Center
-        glm::vec3(2.0f, 0.0f, 0.0f),    // Right
-        glm::vec3(-2.0f, 0.0f, 0.0f)    // Left
-    };
-    
-    for (size_t i = 0; i < positions.size(); ++i) {
-        uint32_t vertexOffset = static_cast<uint32_t>(_vertices.size());
-        
-        // Add vertices with position offset
-        for (const auto& vertex : baseVertices) {
-            Vertex newVertex = vertex;
-            newVertex.pos += positions[i];
-            _vertices.push_back(newVertex);
-        }
-        
-        // Add indices with vertex offset
-        for (const auto& index : baseIndices) {
-            _indices.push_back(index + vertexOffset);
-        }
+    if (_meshManager->getMeshCount() == 0) {
+        _meshManager->addMesh(*this, "models/viking_room.obj", "textures/viking_room.png", 
+                             glm::vec3(0.0f, 0.0f, 0.0f));
     }
-    
-    _vertexBuffer = std::make_unique<Buffer>(
-        *this,
-        sizeof(_vertices[0]) * _vertices.size(),
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-    );
-    _vertexBuffer->CPUToGPU(*this, (void *) _vertices.data());
-    
-    _indexBuffer = std::make_unique<Buffer>(
-        *this,
-        sizeof(_indices[0]) * _indices.size(),
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-    );
-    _indexBuffer->CPUToGPU(*this, (void *) _indices.data());
-    
-    TextureImage texture("textures/viking_room.png");
-    _stagingBuffer = std::make_unique<Buffer>(
-        *this,
-        texture.getSize(),
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-    );
-    _stagingBuffer->mapTo(texture.getPixels());
-    texture.freePixels();
-    
-    _image = std::make_unique<Image>(
-        *this,
-        texture,
-        *_device,
-        *_stagingBuffer,
-        _swapchain->getFormat(),
-        VK_IMAGE_TILING_OPTIMAL,
-        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-    );
-    
-    _textureImageView = std::make_unique<ImageView>(
-        _device,
-        *_image,
-        _swapchain->getFormat(),
-        VK_IMAGE_ASPECT_COLOR_BIT
-    );
-    
-    _uniformBuffers.reserve(MAX_FRAMES_IN_FLIGHT);
-    for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        _uniformBuffers.emplace_back(
-            *this,
-            sizeof(UniformBufferObject),
-            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-        );
-        _uniformBuffers[i].map();
-        
-        VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = _uniformBuffers[i].getPrimitive();
-        bufferInfo.offset = 0;
-        bufferInfo.range = sizeof(UniformBufferObject);
-
-        VkDescriptorImageInfo imageInfo{};
-        imageInfo.sampler = _textureSampler->getPrimitive();
-        imageInfo.imageView = _textureImageView->getPrimitive();
-        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-        _descriptorSets->write(i, bufferInfo, imageInfo);
-    }
-    
-    _commandBuffers->transitionImageLayout(*_image, 
-        VK_IMAGE_LAYOUT_UNDEFINED, 
-        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    _stagingBuffer->copyToImage(_commandPool, *_image);
-    _commandBuffers->transitionImageLayout(*_image, 
-        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
-        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }

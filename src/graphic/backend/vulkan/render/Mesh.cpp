@@ -5,12 +5,9 @@
 Mesh::Mesh(Instance &instance, const char *modelPath, const char *texturePath)
     : _position(0.0f), _rotation(0.0f), _scale(1.0f), _instance(&instance)
 {
-    // Load model
     _model = std::make_unique<Model>(modelPath);
     const std::vector<Vertex> &vertices = _model->getVertices();
     const std::vector<uint32_t> &indices = _model->getIndices();
-    
-    // Create vertex buffer
     _vertexBuffer = std::make_unique<Buffer>(
         instance,
         sizeof(vertices[0]) * vertices.size(),
@@ -18,8 +15,6 @@ Mesh::Mesh(Instance &instance, const char *modelPath, const char *texturePath)
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
     );
     _vertexBuffer->CPUToGPU(instance, (void *) vertices.data());
-    
-    // Create index buffer
     _indexBuffer = std::make_unique<Buffer>(
         instance,
         sizeof(indices[0]) * indices.size(),
@@ -27,8 +22,6 @@ Mesh::Mesh(Instance &instance, const char *modelPath, const char *texturePath)
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
     );
     _indexBuffer->CPUToGPU(instance, (void *) indices.data());
-    
-    // Load texture
     TextureImage texture(texturePath);
     _stagingBuffer = std::make_unique<Buffer>(
         instance,
@@ -38,8 +31,6 @@ Mesh::Mesh(Instance &instance, const char *modelPath, const char *texturePath)
     );
     _stagingBuffer->mapTo(texture.getPixels());
     texture.freePixels();
-    
-    // Create image
     _image = std::make_unique<Image>(
         instance,
         texture,
@@ -50,25 +41,14 @@ Mesh::Mesh(Instance &instance, const char *modelPath, const char *texturePath)
         VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
     );
-    
-    // Create image view
     _imageView = std::make_unique<ImageView>(
         instance.getDevice(),
         *_image,
         instance.getSwapchain()->getFormat(),
         VK_IMAGE_ASPECT_COLOR_BIT
     );
-    
-    // Create descriptor set layout (shared from instance)
-    // We'll use the instance's descriptor set layout
-    
-    // Create descriptor pool
     _descriptorPool = std::make_unique<DescriptorPool>(instance.getDevice());
-    
-    // Create descriptor sets
     _descriptorSets = std::make_unique<DescriptorSets>(*instance.getDevice(), *instance.getDescriptorSetLayout(), *_descriptorPool);
-    
-    // Create uniform buffers
     _uniformBuffers.reserve(MAX_FRAMES_IN_FLIGHT);
     for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         _uniformBuffers.emplace_back(std::make_unique<Buffer>(
@@ -91,8 +71,6 @@ Mesh::Mesh(Instance &instance, const char *modelPath, const char *texturePath)
 
         _descriptorSets->write(i, bufferInfo, imageInfo);
     }
-    
-    // Setup image transition
     instance.getCommandBuffers()->transitionImageLayout(*_image, 
         VK_IMAGE_LAYOUT_UNDEFINED, 
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);

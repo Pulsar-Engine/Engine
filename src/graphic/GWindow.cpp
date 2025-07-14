@@ -92,8 +92,20 @@ void GWindow::drawFrame(Instance &instance) {
     }
 
     vkResetFences(instance.getDevice()->getPrimitive(), 1, &syncObj.getInFlightFence());
+    
+    glm::mat4 view = glm::lookAt(_camera.getPos(), _camera.getPos() + _camera.getFront(), _camera.getUp());
+    glm::mat4 proj = glm::perspective(
+        glm::radians(_camera.getFOV()),
+        static_cast<float>(_width) / static_cast<float>(_height),
+        0.1f,
+        100.0f
+    );
+    proj[1][1] *= -1;
+    
+    instance.getMeshManager().updateUniformBuffers(_currentFrame, view, proj);
+    
     instance.getCommandBuffers()->record(instance, imageIndex, _currentFrame);
-    updateUniformBuffer(instance.getUniformBuffers()[_currentFrame]);
+    
     VkSubmitInfo submitInfo = {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submitInfo.waitSemaphoreCount = 1;
@@ -131,20 +143,6 @@ void GWindow::drawFrame(Instance &instance) {
     }
 
     _currentFrame = (_currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
-}
-
-void GWindow::updateUniformBuffer(Buffer &uniformBuffer) {
-    UniformBufferObject ubo = {};
-    ubo.model = glm::mat4(1.0f);
-    ubo.view = glm::lookAt(_camera.getPos(), _camera.getPos() + _camera.getFront(), _camera.getUp());
-    ubo.proj = glm::perspective(
-        glm::radians(_camera.getFOV()),
-        static_cast<float>(_width) / static_cast<float>(_height),
-        0.1f,
-        100.0f
-    );
-    ubo.proj[1][1] *= -1;
-    uniformBuffer.copyData(&ubo);
 }
 
 GWindow::~GWindow() {
