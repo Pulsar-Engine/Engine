@@ -1,11 +1,10 @@
-
 #include "GWindow.hpp"
 #include "GWindow.hpp"
 #include "backend/vulkan/Instance.hpp"
 
 GWindow *GWindow::_instance = nullptr;
 
-GWindow::GWindow(const int width, const int height, const char *title, bool fromEditor) : _width(width), _height(height), _title(title), _currentFrame(0) {
+GWindow::GWindow(const int width, const int height, const char *title, bool fromEditor) : _width(width), _height(height), _title(title), _currentFrame(0), _camera(width, height) {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
@@ -14,16 +13,6 @@ GWindow::GWindow(const int width, const int height, const char *title, bool from
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
     }
-    _cameraPos = glm::vec3(0.0f, -3.0f, 1.5f);
-    _cameraFront = glm::vec3(0.0f, 1.0f, -0.5f);
-    _cameraUp = glm::vec3(0.0f, 0.0f, 1.0f);
-    _yaw = glm::degrees(atan2(_cameraFront.y, _cameraFront.x));
-    _pitch = glm::degrees(asin(_cameraFront.z));
-    _fov = 45.0f;
-    _firstMouse = true;
-    _lastX = _width / 2.0;
-    _lastY = _height / 2.0;
-    _cursorDisabled = false;
     _primitive = glfwCreateWindow(width, height, title, nullptr, nullptr);
     glfwSetInputMode(_primitive, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     _framebufferResized = false;
@@ -43,28 +32,7 @@ GWindow::GWindow(const int width, const int height, const char *title, bool from
 }
 
 void GWindow::onMouseMove(double xpos, double ypos) {
-    if (_firstMouse) {
-        _lastX = xpos;
-        _lastY = ypos;
-        _firstMouse = false;
-        return;
-    }
-    double xoffset = _lastX - xpos;
-    double yoffset = _lastY - ypos;
-    _lastX = xpos;
-    _lastY = ypos;
-    const float sensitivity = 0.1f;
-    xoffset *= sensitivity;
-    yoffset *= sensitivity;
-    _yaw   += static_cast<float>(xoffset);
-    _pitch += static_cast<float>(yoffset);
-    if (_pitch > 89.0f) _pitch = 89.0f;
-    if (_pitch < -89.0f) _pitch = -89.0f;
-    glm::vec3 direction;
-    direction.x = cos(glm::radians(_yaw)) * cos(glm::radians(_pitch));
-    direction.y = sin(glm::radians(_yaw)) * cos(glm::radians(_pitch));
-    direction.z = sin(glm::radians(_pitch));
-    _cameraFront = glm::normalize(direction);
+    _camera.changeDirection(xpos, ypos);
 }
 
 void GWindow::callbackResize(GLFWwindow *window, int width, int height) {
@@ -76,7 +44,6 @@ void GWindow::callbackResize(GLFWwindow *window, int width, int height) {
 
 void GWindow::loop(Instance &instance) {
     _finished = false;
-    float cameraSpeed = 2.5f;
     double lastFrameTime = glfwGetTime();
     while (!glfwWindowShouldClose(_primitive) && !_finished) {
         instance.getDevice()->waitIdle();
@@ -86,17 +53,17 @@ void GWindow::loop(Instance &instance) {
         float deltaTime = static_cast<float>(currentTime - lastFrameTime);
         lastFrameTime = currentTime;
         if (glfwGetKey(_primitive, GLFW_KEY_W) == GLFW_PRESS)
-            _cameraPos += cameraSpeed * _cameraFront * deltaTime;
+            _camera.move(Direction::FORWARD, deltaTime);
         if (glfwGetKey(_primitive, GLFW_KEY_S) == GLFW_PRESS)
-            _cameraPos -= cameraSpeed * _cameraFront * deltaTime;
+            _camera.move(Direction::BACKWARD, deltaTime);
         if (glfwGetKey(_primitive, GLFW_KEY_A) == GLFW_PRESS)
-            _cameraPos -= glm::normalize(glm::cross(_cameraFront, _cameraUp)) * cameraSpeed * deltaTime;
+            _camera.move(Direction::LEFT, deltaTime);
         if (glfwGetKey(_primitive, GLFW_KEY_D) == GLFW_PRESS)
-            _cameraPos += glm::normalize(glm::cross(_cameraFront, _cameraUp)) * cameraSpeed * deltaTime;
+            _camera.move(Direction::RIGHT, deltaTime);
         if (glfwGetKey(_primitive, GLFW_KEY_SPACE) == GLFW_PRESS)
-            _cameraPos += _cameraUp * cameraSpeed * deltaTime;
+            _camera.move(Direction::UP, deltaTime);
         if (glfwGetKey(_primitive, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-            _cameraPos -= _cameraUp * cameraSpeed * deltaTime;
+            _camera.move(Direction::DOWN, deltaTime);
         glfwPollEvents();
         drawFrame(instance);
     }
@@ -169,9 +136,9 @@ void GWindow::drawFrame(Instance &instance) {
 void GWindow::updateUniformBuffer(Buffer &uniformBuffer) {
     UniformBufferObject ubo = {};
     ubo.model = glm::mat4(1.0f);
-    ubo.view = glm::lookAt(_cameraPos, _cameraPos + _cameraFront, _cameraUp);
+    ubo.view = glm::lookAt(_camera.getPos(), _camera.getPos() + _camera.getFront(), _camera.getUp());
     ubo.proj = glm::perspective(
-        glm::radians(_fov),
+        glm::radians(_camera.getFOV()),
         static_cast<float>(_width) / static_cast<float>(_height),
         0.1f,
         100.0f

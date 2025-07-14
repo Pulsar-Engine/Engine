@@ -17,7 +17,6 @@ CommandBuffers::CommandBuffers(std::unique_ptr<Device> &device, std::unique_ptr<
     if (vkAllocateCommandBuffers(device->getPrimitive(), &allocInfo, _commandBuffers.data()) != VK_SUCCESS)
         throw std::runtime_error("failed to allocate command buffers!");
     
-
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         _syncObjs.emplace_back(device);
 }
@@ -25,7 +24,7 @@ CommandBuffers::CommandBuffers(std::unique_ptr<Device> &device, std::unique_ptr<
 CommandBuffers::~CommandBuffers()
 {
     _syncObjs.clear();
-    vkFreeCommandBuffers(_device->getPrimitive(), _commandPool->getPrimitive(), 1, _commandBuffers.data());
+    vkFreeCommandBuffers(_device->getPrimitive(), _commandPool->getPrimitive(), static_cast<uint32_t>(_commandBuffers.size()), _commandBuffers.data());
 }
 
 void CommandBuffers::record(Instance &instance, uint32_t imageIndex, uint32_t currentFrame)
