@@ -41,6 +41,8 @@ public:
         }
     }
 
+    void updateAllSystems(float dt, Coordinator& coordinator);
+
 private:
     std::unordered_map<const char*, Signature> _signatures{};
     std::unordered_map<const char*, std::shared_ptr<System>> _systems{};
