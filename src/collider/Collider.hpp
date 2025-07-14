@@ -1,9 +1,17 @@
 #ifndef COLLIDER_HPP_
     #define COLLIDER_HPP_
 
-     #include <glm/glm.hpp>
+    #include <glm/glm.hpp>
 
-typedef struct IntersectionResult {
+    #ifdef _WIN32
+        #ifndef NOMINMAX
+            #define NOMINMAX
+        #endif
+        #undef min
+        #undef max
+    #endif
+
+struct IntersectionResult {
     bool intersected;
     glm::vec3 point;
     glm::vec3 normal;
@@ -18,7 +26,7 @@ class MeshCollider;
 class Collider {
     public:
         Collider() = default;
-        virtual ~Collider() = 0;
+        virtual ~Collider() = default;
         IntersectionResult isTouchedBy(const Collider &other) const;
         virtual IntersectionResult intersect(const AABB &other) const = 0;
         virtual IntersectionResult intersect(const Sphere &other) const = 0;

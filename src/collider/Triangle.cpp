@@ -3,15 +3,6 @@
 #include "Sphere.hpp"
 #include "OBB.hpp"
 #include "MeshCollider.hpp"
-#include <algorithm>
-
-#ifdef _WIN32
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#undef min
-#undef max
-#endif
 
 Triangle::Triangle(const glm::vec3 &v0, const glm::vec3 &v1, const glm::vec3 &v2)
     : _v0(v0), _v1(v1), _v2(v2) {}
@@ -66,7 +57,7 @@ IntersectionResult Triangle::intersect(const Triangle &other) const {
 }
 
 bool Triangle::testCoplanarTriangles(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2,
-                                   const glm::vec3& u0, const glm::vec3& u1, const glm::vec3& u2) const {
+                                const glm::vec3& u0, const glm::vec3& u1, const glm::vec3& u2) const {
     return pointInTriangle2D(v0, u0, u1, u2) || pointInTriangle2D(v1, u0, u1, u2) || pointInTriangle2D(v2, u0, u1, u2) ||
            pointInTriangle2D(u0, v0, v1, v2) || pointInTriangle2D(u1, v0, v1, v2) || pointInTriangle2D(u2, v0, v1, v2);
 }
@@ -87,8 +78,8 @@ bool Triangle::pointInTriangle2D(const glm::vec3& p, const glm::vec3& a, const g
 }
 
 bool Triangle::computeInterval(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2,
-                             const glm::vec3& direction, float d0, float d1, float d2,
-                             float& t_min, float& t_max) const {
+                        const glm::vec3& direction, float d0, float d1, float d2,
+                        float& t_min, float& t_max) const {
     float p0 = glm::dot(v0, direction);
     float p1 = glm::dot(v1, direction);
     float p2 = glm::dot(v2, direction);

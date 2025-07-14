@@ -2,6 +2,7 @@
 #include "Sphere.hpp"
 #include "OBB.hpp"
 #include "Triangle.hpp"
+#include "MeshCollider.hpp"
 
 AABB::AABB(const glm::vec3 &min, const glm::vec3 &max) : _min(min), _max(max) {}
 
@@ -29,7 +30,7 @@ IntersectionResult AABB::intersect(const AABB &other) const {
         result.intersected = false;
         return result;
     }
-    result.point = glm::vec3(std::max(_min.x, other._min.x), std::max(_min.y, other._min.y), std::max(_min.z, other._min.z));
+    result.point = glm::vec3(glm::max(_min.x, other._min.x), glm::max(_min.y, other._min.y), glm::max(_min.z, other._min.z));
     result.normal = glm::normalize(result.point - _min);
     return result;
 }

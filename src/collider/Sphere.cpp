@@ -2,6 +2,7 @@
 #include "AABB.hpp"
 #include "OBB.hpp"
 #include "Triangle.hpp"
+#include "MeshCollider.hpp"
 
 Sphere::Sphere(const glm::vec3 &center, float radius) : _center(center), _radius(radius) {}
 

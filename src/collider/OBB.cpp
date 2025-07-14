@@ -2,6 +2,7 @@
 #include "AABB.hpp"
 #include "Sphere.hpp"
 #include "Triangle.hpp"
+#include "MeshCollider.hpp"
 
 OBB::OBB(const glm::vec3 &center, const glm::vec3 &halfSize, const glm::mat3 &rotationMatrix)
     : _center(center), _halfSize(halfSize), _rotationMatrix(rotationMatrix) {}
@@ -129,8 +130,8 @@ IntersectionResult OBB::intersect(const Triangle &other) const {
             float length = glm::length(axis);
             if (length < 1e-6f) continue;
             axis /= length;
-            float minT = glm::dot(axis, v0);
-            float maxT = minT;
+            minT = glm::dot(axis, v0);
+            maxT = minT;
             temp = glm::dot(axis, v1);
             minT = glm::min(minT, temp);
             maxT = glm::max(maxT, temp);
@@ -141,7 +142,7 @@ IntersectionResult OBB::intersect(const Triangle &other) const {
                              _halfSize[1] * glm::abs(glm::dot(axis, axes[1])) +
                              _halfSize[2] * glm::abs(glm::dot(axis, axes[2]));
             if (maxT < -radiusOBB || minT > radiusOBB) return result;
-            float overlap = glm::min(maxT + radiusOBB, radiusOBB) - glm::max(minT - radiusOBB, -radiusOBB);
+            overlap = glm::min(maxT + radiusOBB, radiusOBB) - glm::max(minT - radiusOBB, -radiusOBB);
             if (overlap < minOverlap) {
                 minOverlap = overlap;
                 minOverlapAxis = axis;
