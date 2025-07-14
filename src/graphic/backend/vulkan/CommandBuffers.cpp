@@ -17,7 +17,6 @@ CommandBuffers::CommandBuffers(std::unique_ptr<Device> &device, std::unique_ptr<
     if (vkAllocateCommandBuffers(device->getPrimitive(), &allocInfo, _commandBuffers.data()) != VK_SUCCESS)
         throw std::runtime_error("failed to allocate command buffers!");
     
-
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         _syncObjs.emplace_back(device);
 }
@@ -25,7 +24,7 @@ CommandBuffers::CommandBuffers(std::unique_ptr<Device> &device, std::unique_ptr<
 CommandBuffers::~CommandBuffers()
 {
     _syncObjs.clear();
-    vkFreeCommandBuffers(_device->getPrimitive(), _commandPool->getPrimitive(), 1, _commandBuffers.data());
+    vkFreeCommandBuffers(_device->getPrimitive(), _commandPool->getPrimitive(), static_cast<uint32_t>(_commandBuffers.size()), _commandBuffers.data());
 }
 
 void CommandBuffers::record(Instance &instance, uint32_t imageIndex, uint32_t currentFrame)
@@ -68,15 +67,10 @@ void CommandBuffers::record(Instance &instance, uint32_t imageIndex, uint32_t cu
     VkRect2D scissor{};
     scissor.offset = {0, 0};
     scissor.extent = swapChainExtent;
-
-    VkBuffer vertexBuffers[] = { instance.getVertexBuffer()->getPrimitive() };
-    VkDeviceSize offsets[] = {0};
-    vkCmdBindVertexBuffers(command, 0, 1, vertexBuffers, offsets);
-    vkCmdBindIndexBuffer(command, instance.getIndexBuffer()->getPrimitive(), 0, VK_INDEX_TYPE_UINT32);
-    
     vkCmdSetScissor(command, 0, 1, &scissor);
-    vkCmdBindDescriptorSets(command, VK_PIPELINE_BIND_POINT_GRAPHICS, instance.getGraphicsPipeline()->getPipelineLayout(), 0, 1, &instance.getDescriptorSets()->getPrimitive()[currentFrame], 0, nullptr);
-    vkCmdDrawIndexed(command, static_cast<uint32_t>(instance.getIndices().size()), 1, 0, 0, 0);
+
+    instance.getMeshManager().bindAndDraw(command, currentFrame);
+    
     vkCmdEndRenderPass(command);
 
     if (vkEndCommandBuffer(command) != VK_SUCCESS)

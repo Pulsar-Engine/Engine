@@ -13,6 +13,7 @@
 
     #include "backend/vulkan/Primitive.hpp"
     #include "backend/vulkan/Buffer.hpp"
+    #include "../modules/Camera.hpp"
 
 class Instance;
 class GWindow : public Primitive<GLFWwindow *> {
@@ -40,16 +41,7 @@ class GWindow : public Primitive<GLFWwindow *> {
         bool _framebufferResized;
         std::atomic<bool> _finished;
         std::atomic<bool> _paused;
-        glm::vec3 _cameraPos;
-        glm::vec3 _cameraFront;
-        glm::vec3 _cameraUp;
-        float _yaw;
-        float _pitch;
-        float _fov;
-        bool _firstMouse;
-        double _lastY;
-        double _lastX;
-        bool _cursorDisabled;
+        Camera _camera;
 };
 
 #endif

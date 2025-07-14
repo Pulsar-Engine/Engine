@@ -1,12 +1,18 @@
 #include "Instance.hpp"
 #include "render/Model.hpp"
+#include "render/TextureImage.hpp"
+#include <iostream>
+
+#ifdef NDEBUG
+    bool enableValidationLayers = false;
+#else
+    bool enableValidationLayers = true;
+#endif
 
 Instance::Instance(const char *title, bool fromEditor)
 {
-    if constexpr(enableValidationLayers) {
-        if (!checkValidationLayerSupport())
-            throw std::runtime_error("validation layers requested, but not available!");
-    }
+    if (enableValidationLayers && !checkValidationLayerSupport())
+        enableValidationLayers = false;
     VkApplicationInfo appInfo = {};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     appInfo.pApplicationName = title;
@@ -45,9 +51,7 @@ Instance::Instance(const char *title, bool fromEditor)
     }
     if (requiredExtensions.size() != 0)
         throw std::runtime_error("failed to find required extensions!");
-    Model model("models/viking_room.obj");
-    _vertices = model.getVertices();
-    _indices = model.getIndices();
+    _meshManager = std::make_unique<MeshManager>();
     if (_debugMessenger.get())
         _debugMessenger->setup(&_primitive);
     _window = std::make_unique<GWindow>(800, 600, title, fromEditor);
@@ -67,7 +71,6 @@ Instance::Instance(const char *title, bool fromEditor)
     _depthResources = std::make_unique<DepthResources>(*this, *_physicalDevice, *_swapchain);
     _frameBuffers = std::make_unique<FrameBuffers>(_graphicsPipeline, *_depthResources, _device, _imageViews, _swapchain->getExtent());
     _textureSampler = std::make_unique<TextureSampler>(_device, *_physicalDevice);
-    createBuffers();
 }
 
 VkBool32 Instance::debugCallback(
@@ -89,14 +92,14 @@ Instance::~Instance()
 {
     this->_commandBuffers.reset();
     cleanupSwapchain();
+    this->_meshManager.reset();
     this->_image.reset();
     this->_stagingBuffer.reset();
     this->_uniformBuffers.clear();
-    this->_textureSampler.reset();
     this->_textureImageView.reset();
-    this->_depthResources.reset();
     this->_indexBuffer.reset();
     this->_vertexBuffer.reset();
+    this->_textureSampler.reset();
     this->_commandPool.reset();
     this->_graphicsPipeline.reset();
     this->_descriptorPool.reset();
@@ -159,6 +162,7 @@ bool Instance::checkValidationLayerSupport()
     vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
     std::vector<VkLayerProperties> availableLayers(layerCount);
     vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+    
     for (const char *layerName : validationLayers) {
         bool layerFound = false;
         for (const auto &layerProperties : availableLayers) {
@@ -172,80 +176,6 @@ bool Instance::checkValidationLayerSupport()
     }
     return true;
 }
-
-void Instance::createBuffers()
-{
-    _vertexBuffer = std::make_unique<Buffer>(
-        *this,
-        sizeof(_vertices[0]) * _vertices.size(),
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-        );
-    _vertexBuffer->CPUToGPU(*this, _vertices.data());
-    _indexBuffer = std::make_unique<Buffer>(
-        *this,
-        sizeof(_indices[0]) * _indices.size(),
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-    );
-    _indexBuffer->CPUToGPU(*this, _indices.data());
-    _textureImage = std::make_unique<TextureImage>("textures/viking_room.png");
-    _stagingBuffer = std::make_unique<Buffer>(
-        *this,
-        _textureImage->getSize(),
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-    );
-    _stagingBuffer->mapTo(_textureImage->getPixels());
-    _textureImage->freePixels();
-    _image = std::make_unique<Image>(
-        *this,
-        *_textureImage,
-        *_device,
-        *_stagingBuffer,
-        _swapchain->getFormat(),
-        VK_IMAGE_TILING_OPTIMAL,
-        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-    );
-    _textureImageView = std::make_unique<ImageView>(
-        _device,
-        *_image,
-        _swapchain->getFormat(),
-        VK_IMAGE_ASPECT_COLOR_BIT
-    );
-
-    _uniformBuffers.reserve(MAX_FRAMES_IN_FLIGHT);
-    for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        _uniformBuffers.emplace_back(
-            *this,
-            sizeof(UniformBufferObject),
-            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-        );
-        _uniformBuffers[i].map();
-        VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = _uniformBuffers[i].getPrimitive();
-        bufferInfo.offset = 0;
-        bufferInfo.range = sizeof(UniformBufferObject);
-
-        VkDescriptorImageInfo imageInfo{};
-        imageInfo.sampler = _textureSampler->getPrimitive();
-        imageInfo.imageView = _textureImageView->getPrimitive();
-        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-        _descriptorSets->write(i, bufferInfo, imageInfo);
-    }
-
-    _commandBuffers->transitionImageLayout(*_image, 
-        VK_IMAGE_LAYOUT_UNDEFINED, 
-        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    _stagingBuffer->copyToImage(_commandPool, *_image);
-    _commandBuffers->transitionImageLayout(*_image, 
-        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
-        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-}
-
 
 std::unique_ptr<PhysicalDevice> &Instance::getPhysicalDevice()
 {
@@ -297,21 +227,10 @@ std::unique_ptr<CommandBuffers> &Instance::getCommandBuffers()
     return _commandBuffers;
 }
 
-std::unique_ptr<Buffer> &Instance::getVertexBuffer()
-{
-    return _vertexBuffer;
-}
-
-std::vector<uint32_t> &Instance::getIndices()
-{
-    return _indices;
-}
-
 std::unique_ptr<DescriptorSetLayout> &Instance::getDescriptorSetLayout()
 {
     return _descriptorSetLayout;
 }
-
 
 uint32_t Instance::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
 {
@@ -322,21 +241,6 @@ uint32_t Instance::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags pro
             return i;
     }
     throw std::runtime_error("failed to find suitable memory type!");
-}
-
-std::vector<Vertex> &Instance::getVertices()
-{
-    return _vertices;
-}
-
-std::unique_ptr<Buffer> &Instance::getIndexBuffer()
-{
-    return _indexBuffer;
-}
-
-std::vector<Buffer> &Instance::getUniformBuffers()
-{
-    return _uniformBuffers;
 }
 
 std::unique_ptr<DescriptorPool> &Instance::getDescriptorPool()
@@ -354,7 +258,47 @@ std::unique_ptr<TextureSampler> &Instance::getTextureSampler()
     return _textureSampler;
 }
 
+std::unique_ptr<Buffer> &Instance::getVertexBuffer()
+{
+    return _vertexBuffer;
+}
+
+std::vector<Vertex> &Instance::getVertices()
+{
+    return _vertices;
+}
+
+std::vector<uint32_t> &Instance::getIndices()
+{
+    return _indices;
+}
+
+std::unique_ptr<Buffer> &Instance::getIndexBuffer()
+{
+    return _indexBuffer;
+}
+
+std::vector<Buffer> &Instance::getUniformBuffers()
+{
+    return _uniformBuffers;
+}
+
 std::unique_ptr<Image> &Instance::getImage()
 {
     return _image;
+}
+
+MeshManager& Instance::getMeshManager()
+{
+    return *_meshManager;
+}
+
+void Instance::addMesh(const char *modelPath, const char *texturePath)
+{
+    _meshManager->addMesh(*this, modelPath, texturePath);
+}
+
+void Instance::addMesh(const char *modelPath, const char *texturePath, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale)
+{
+    _meshManager->addMesh(*this, modelPath, texturePath, position, rotation, scale);
 }
