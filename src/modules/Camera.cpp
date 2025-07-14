@@ -45,16 +45,19 @@ void Camera::move(Direction direction, float deltaTime) {
     switch (direction) {
         case DOWN:
             sign = -1;
+            [[fallthrough]];
         case UP:
             _pos += _up * _speed * deltaTime * sign;
             break;
         case LEFT:
             sign = -1;
+            [[fallthrough]];
         case RIGHT:
             _pos += glm::normalize(glm::cross(_front, _up)) * _speed * deltaTime * sign;
             break;
         case BACKWARD:
             sign = -1;
+            [[fallthrough]];
         case FORWARD:
             _pos += _speed * _front * deltaTime * sign;
             break;

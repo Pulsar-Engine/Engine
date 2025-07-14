@@ -3,40 +3,14 @@
 #include "render/TextureImage.hpp"
 #include <iostream>
 
-#ifndef NDEBUG
-    bool enableValidationLayers = false;
-#endif
-
-static bool autoDetectValidationLayers() {
 #ifdef NDEBUG
-    return false;
+    bool enableValidationLayers = false;
 #else
-    uint32_t layerCount;
-    vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-    
-    std::vector<VkLayerProperties> availableLayers(layerCount);
-    vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
-    
-    bool foundKhronosValidation = false;
-    for (const auto& layerProperties : availableLayers) {
-        if (strcmp("VK_LAYER_KHRONOS_validation", layerProperties.layerName) == 0) {
-            foundKhronosValidation = true;
-            break;
-        }
-    }
-    
-    if (foundKhronosValidation)
-        return true;
-    else
-        return false;
+    bool enableValidationLayers = true;
 #endif
-}
 
 Instance::Instance(const char *title, bool fromEditor)
 {
-#ifndef NDEBUG
-    enableValidationLayers = autoDetectValidationLayers();
-#endif
     if (enableValidationLayers && !checkValidationLayerSupport())
         enableValidationLayers = false;
     VkApplicationInfo appInfo = {};
