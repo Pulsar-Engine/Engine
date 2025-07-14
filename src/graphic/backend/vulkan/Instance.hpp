@@ -29,6 +29,7 @@
     #include <cstring>
     #include <iostream>
     #include <cstdlib>
+    #include <mutex>
 
     #ifdef _WIN32
         #include <vulkan/vulkan_win32.h>
@@ -83,8 +84,8 @@ class Instance : public Primitive<VkInstance> {
         uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
         
         MeshManager& getMeshManager();
-        void addMesh(const char *modelPath, const char *texturePath);
-        void addMesh(const char *modelPath, const char *texturePath, glm::vec3 position, glm::vec3 rotation = glm::vec3(0.0f), glm::vec3 scale = glm::vec3(1.0f));
+        std::shared_ptr<Mesh> &addMesh(const char *modelPath, const char *texturePath);
+        std::shared_ptr<Mesh> &addMesh(const char *modelPath, const char *texturePath, glm::vec3 position, glm::vec3 rotation = glm::vec3(0.0f), glm::vec3 scale = glm::vec3(1.0f));
     protected:
     private:
         std::unique_ptr<PhysicalDevice> _physicalDevice;
@@ -112,6 +113,7 @@ class Instance : public Primitive<VkInstance> {
         std::unique_ptr<Image> _image;
         std::unique_ptr<ImageView> _textureImageView;
         std::unique_ptr<MeshManager> _meshManager;
+        std::mutex _mutex;
 };
 
 #endif

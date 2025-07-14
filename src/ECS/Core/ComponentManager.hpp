@@ -18,12 +18,12 @@ public:
 template<typename T>
 class ComponentArray : public IComponentArray {
 public:
-    void insertData(Entity entity, T component) {
+    void insertData(Entity entity, T&& component) {
         assert(_entityToIndex.find(entity) == _entityToIndex.end() && "Component added twice.");
         size_t newIndex = _size;
         _entityToIndex[entity] = newIndex;
         _indexToEntity[newIndex] = entity;
-        _components[newIndex] = component;
+        _components[newIndex] = std::forward<T>(component);
         _size++;
     }
 
@@ -31,7 +31,7 @@ public:
         assert(_entityToIndex.find(entity) != _entityToIndex.end() && "Removing non-existent component.");
         size_t indexOfRemoved = _entityToIndex[entity];
         size_t indexOfLast = _size - 1;
-        _components[indexOfRemoved] = _components[indexOfLast];
+        _components[indexOfRemoved] = std::move(_components[indexOfLast]);
         Entity entityOfLast = _indexToEntity[indexOfLast];
         _entityToIndex[entityOfLast] = indexOfRemoved;
         _indexToEntity[indexOfRemoved] = entityOfLast;
@@ -43,6 +43,10 @@ public:
     T& getData(Entity entity) {
         assert(_entityToIndex.find(entity) != _entityToIndex.end() && "Component not found.");
         return _components[_entityToIndex[entity]];
+    }
+
+    bool hasData(Entity entity) {
+        return _entityToIndex.find(entity) != _entityToIndex.end();
     }
 
     void entityDestroyed(Entity entity) override {
@@ -77,8 +81,8 @@ public:
     }
 
     template<typename T>
-    void addComponent(Entity entity, T component) {
-        getComponentArray<T>()->insertData(entity, component);
+    void addComponent(Entity entity, T&& component) {
+        getComponentArray<T>()->insertData(entity, std::forward<T>(component));
     }
 
     template<typename T>
@@ -89,6 +93,12 @@ public:
     template<typename T>
     T& getComponent(Entity entity) {
         return getComponentArray<T>()->getData(entity);
+    }
+
+    template<typename T>
+    bool hasComponent(Entity entity) {
+        auto componentArray = getComponentArray<T>();
+        return componentArray->hasData(entity);
     }
 
     void entityDestroyed(Entity entity);

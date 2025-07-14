@@ -1,6 +1,6 @@
 #include "GWindow.hpp"
-#include "GWindow.hpp"
 #include "backend/vulkan/Instance.hpp"
+#include "ECS/Core/Coordinator.hpp"
 
 GWindow *GWindow::_instance = nullptr;
 
@@ -42,13 +42,16 @@ void GWindow::callbackResize(GLFWwindow *window, int width, int height) {
     _framebufferResized = true;
 }
 
-void GWindow::loop(Instance &instance) {
-    _finished = false;
+void GWindow::loop(Instance &instance, Coordinator &coordinator) {
+    _closed = false;
+    _paused = false;
     double lastFrameTime = glfwGetTime();
-    while (!glfwWindowShouldClose(_primitive) && !_finished) {
+    while (!glfwWindowShouldClose(_primitive) && !_closed) {
         instance.getDevice()->waitIdle();
-        if (_paused)
+        if (_paused) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
             continue;
+        }
         double currentTime = glfwGetTime();
         float deltaTime = static_cast<float>(currentTime - lastFrameTime);
         lastFrameTime = currentTime;
@@ -65,6 +68,7 @@ void GWindow::loop(Instance &instance) {
         if (glfwGetKey(_primitive, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
             _camera.move(Direction::DOWN, deltaTime);
         glfwPollEvents();
+        coordinator.Update(deltaTime);
         drawFrame(instance);
     }
 }
@@ -157,11 +161,15 @@ GWindow *GWindow::getInstance() {
 }
 
 void GWindow::close() {
-    _finished = true;
+    _closed = true;
 }
 
 void GWindow::togglePause() {
     _paused = !_paused;
+}
+
+std::atomic<bool> &GWindow::isClosed() {
+    return _closed;
 }
 
 void GWindow::toggleShow() {

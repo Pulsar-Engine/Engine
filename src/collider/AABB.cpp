@@ -17,7 +17,15 @@ IntersectionResult AABB::intersect(const Sphere &other) const {
         return result;
     }
     result.point = closestPoint;
-    result.normal = glm::normalize(direction);
+    
+    // Éviter la division par zéro dans normalize
+    if (glm::length(direction) < 1e-6f) {
+        // Si la sphère est exactement sur le point le plus proche, utiliser une normale par défaut
+        result.normal = glm::vec3(1.0f, 0.0f, 0.0f);
+    } else {
+        result.normal = glm::normalize(direction);
+    }
+    
     return result;
 }
 
@@ -30,8 +38,23 @@ IntersectionResult AABB::intersect(const AABB &other) const {
         result.intersected = false;
         return result;
     }
+    
+    // Calculer le point d'intersection
     result.point = glm::vec3(glm::max(_min.x, other._min.x), glm::max(_min.y, other._min.y), glm::max(_min.z, other._min.z));
-    result.normal = glm::normalize(result.point - _min);
+    
+    // Calculer la normale de collision de manière plus robuste
+    glm::vec3 thisCenter = (_min + _max) * 0.5f;
+    glm::vec3 otherCenter = (other._min + other._max) * 0.5f;
+    glm::vec3 direction = otherCenter - thisCenter;
+    
+    // Éviter la division par zéro dans normalize
+    if (glm::length(direction) < 1e-6f) {
+        // Si les centres sont identiques, utiliser une normale par défaut
+        result.normal = glm::vec3(1.0f, 0.0f, 0.0f);
+    } else {
+        result.normal = glm::normalize(direction);
+    }
+    
     return result;
 }
 

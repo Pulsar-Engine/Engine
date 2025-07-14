@@ -10,18 +10,18 @@ MeshManager::~MeshManager()
     clear();
 }
 
-void MeshManager::addMesh(Instance &instance, const char *modelPath, const char *texturePath)
+std::shared_ptr<Mesh> &MeshManager::addMesh(Instance &instance, const char *modelPath, const char *texturePath)
 {
-    _meshes.emplace_back(std::make_unique<Mesh>(instance, modelPath, texturePath));
+    return _meshes.emplace_back(std::make_shared<Mesh>(instance, modelPath, texturePath));
 }
 
-void MeshManager::addMesh(Instance &instance, const char *modelPath, const char *texturePath, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale)
+std::shared_ptr<Mesh> &MeshManager::addMesh(Instance &instance, const char *modelPath, const char *texturePath, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale)
 {
-    auto mesh = std::make_unique<Mesh>(instance, modelPath, texturePath);
+    auto mesh = std::make_shared<Mesh>(instance, modelPath, texturePath);
     mesh->setPosition(position);
     mesh->setRotation(rotation);
     mesh->setScale(scale);
-    _meshes.emplace_back(std::move(mesh));
+    return _meshes.emplace_back(std::move(mesh));
 }
 
 void MeshManager::removeMesh(size_t index)
@@ -49,7 +49,7 @@ Mesh* MeshManager::getMesh(size_t index)
     return nullptr;
 }
 
-std::vector<std::unique_ptr<Mesh>>& MeshManager::getAllMeshes()
+std::vector<std::shared_ptr<Mesh>>& MeshManager::getAllMeshes()
 {
     return _meshes;
 }

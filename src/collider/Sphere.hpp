@@ -13,6 +13,8 @@ class Sphere : public Collider {
         IntersectionResult intersect(const MeshCollider &other) const override;
         glm::vec3 getCenter() const { return _center; }
         float getRadius() const { return _radius; }
+        void setCenter(const glm::vec3& center) { _center = center; }
+        void setRadius(float radius) { _radius = radius; }
     protected:
         glm::vec3 _center;
         float _radius;

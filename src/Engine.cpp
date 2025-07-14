@@ -1,21 +1,25 @@
 #include "Engine.hpp"
+#include <mutex>
 
 Instance *Engine::_instance = nullptr;
+Coordinator *Engine::_coordinator = nullptr;
 
 void Engine::initWindow(bool fromEditor = false)
 {
     _instance = new Instance("Pulsar", fromEditor);
+    _coordinator = new Coordinator();
 }
 
 void Engine::render()
 {
-    _instance->getWindow()->loop(*_instance);
+    _instance->getWindow()->loop(*_instance, *_coordinator);
 }
 
 void Engine::destroyWindow()
 {
     Engine::close();
     delete _instance;
+    delete _coordinator;
 }
 
 void Engine::togglePause()
@@ -26,6 +30,14 @@ void Engine::togglePause()
 void Engine::toggleShow()
 {
     _instance->getWindow()->toggleShow();
+}
+
+Instance *Engine::getInstance() {
+    return _instance;
+}
+
+Coordinator *Engine::getCoordinator() {
+    return _coordinator;
 }
 
 void *Engine::getWindowPtr()

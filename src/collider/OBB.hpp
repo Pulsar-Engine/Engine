@@ -14,6 +14,9 @@ class OBB : public Collider {
         glm::vec3 getCenter() const { return _center; }
         glm::vec3 getHalfSize() const { return _halfSize; }
         glm::mat3 getRotationMatrix() const { return _rotationMatrix; }
+        void setCenter(const glm::vec3& center) { _center = center; }
+        void setHalfSize(const glm::vec3& halfSize) { _halfSize = halfSize; }
+        void setRotationMatrix(const glm::mat3& rotationMatrix) { _rotationMatrix = rotationMatrix; }
     protected:
         glm::vec3 _center;
         glm::vec3 _halfSize;

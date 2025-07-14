@@ -13,6 +13,8 @@ class AABB : public Collider {
         IntersectionResult intersect(const MeshCollider &other) const override;
         glm::vec3 getMin() const { return _min; }
         glm::vec3 getMax() const { return _max; }
+        void setMin(const glm::vec3& min) { _min = min; }
+        void setMax(const glm::vec3& max) { _max = max; }
     protected:
         glm::vec3 _min;
         glm::vec3 _max;

@@ -90,35 +90,73 @@ VkBool32 Instance::debugCallback(
 
 Instance::~Instance()
 {
+    // Attendre que toutes les opérations du device soient terminées
+    if (_device && _device.get()) {
+        vkDeviceWaitIdle(_device->getPrimitive());
+    }
+    
+    // Ordre de destruction crucial pour éviter les accès mémoire invalides
+    // 1. Command buffers d'abord
     this->_commandBuffers.reset();
+    
+    // 2. Nettoyer swapchain et framebuffers
     cleanupSwapchain();
+    
+    // 3. Ressources mesh et buffers
     this->_meshManager.reset();
-    this->_image.reset();
-    this->_stagingBuffer.reset();
     this->_uniformBuffers.clear();
-    this->_textureImageView.reset();
     this->_indexBuffer.reset();
     this->_vertexBuffer.reset();
+    this->_stagingBuffer.reset();
+    
+    // 4. Images et textures
+    this->_textureImageView.reset();
+    this->_image.reset();
     this->_textureSampler.reset();
+    
+    // 5. Command pool après les command buffers
     this->_commandPool.reset();
+    
+    // 6. Pipeline graphique
     this->_graphicsPipeline.reset();
+    
+    // 7. Descriptors
     this->_descriptorPool.reset();
     this->_descriptorSetLayout.reset();
+    
+    // 8. Surface avant device
     this->_surface.reset();
+    
+    // 9. Window
     this->_window.reset();
+    
+    // 10. Device avant physical device
     this->_device.reset();
     this->_physicalDevice.reset();
+    
+    // 11. Debug messenger avant l'instance
     if (this->_debugMessenger.get())
         this->_debugMessenger.reset();
-    vkDestroyInstance(_primitive, nullptr);
+    
+    // 12. Instance en dernier
+    if (_primitive != VK_NULL_HANDLE) {
+        vkDestroyInstance(_primitive, nullptr);
+        _primitive = VK_NULL_HANDLE;
+    }
 }
 
 void Instance::cleanupSwapchain()
 {
+    // Attendre que le device soit idle avant de nettoyer
+    if (_device && _device.get()) {
+        vkDeviceWaitIdle(_device->getPrimitive());
+    }
+    
+    // Ordre de destruction: framebuffers d'abord, puis depth resources, puis image views, puis swapchain
     this->_frameBuffers.reset();
+    this->_depthResources.reset();
     this->_imageViews.clear();
     this->_swapchain.reset();
-    this->_depthResources.reset();
 }
 
 void Instance::recreateSwapchain()
@@ -293,12 +331,18 @@ MeshManager& Instance::getMeshManager()
     return *_meshManager;
 }
 
-void Instance::addMesh(const char *modelPath, const char *texturePath)
+std::shared_ptr<Mesh> &Instance::addMesh(const char *modelPath, const char *texturePath)
 {
-    _meshManager->addMesh(*this, modelPath, texturePath);
+    _mutex.lock();
+    std::shared_ptr<Mesh> &mesh = _meshManager->addMesh(*this, modelPath, texturePath);
+    _mutex.unlock();
+    return mesh;
 }
 
-void Instance::addMesh(const char *modelPath, const char *texturePath, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale)
+std::shared_ptr<Mesh> &Instance::addMesh(const char *modelPath, const char *texturePath, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale)
 {
-    _meshManager->addMesh(*this, modelPath, texturePath, position, rotation, scale);
+    _mutex.lock();
+    std::shared_ptr<Mesh> &mesh = _meshManager->addMesh(*this, modelPath, texturePath, position, rotation, scale);
+    _mutex.unlock();
+    return mesh;
 }

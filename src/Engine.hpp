@@ -2,6 +2,7 @@
     #define ENGINE_HPP_
 
     #include "graphic/backend/vulkan/Instance.hpp"
+    #include "ECS/Core/Coordinator.hpp"
 
     #ifdef _WIN32
         #define ENGINE_API __declspec(dllexport)
@@ -22,9 +23,12 @@ class Engine {
         ENGINE_API static void togglePause();
         ENGINE_API static void toggleShow();
         ENGINE_API static void* getWindowPtr();
+        static Instance *getInstance();
+        static Coordinator *getCoordinator();
     protected:
     private:
         static Instance* _instance;
+        static Coordinator *_coordinator;
 };
 
 #endif /* !ENGINE_HPP_ */

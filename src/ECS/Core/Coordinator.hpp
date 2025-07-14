@@ -4,13 +4,13 @@
 #include <memory>
 #include "EntityManager.hpp"
 #include "ComponentManager.hpp"
-#include "SystemManager.hpp"
-#include "Scene/SceneManager.hpp"
+#include "../Systems/SystemManager.hpp"
+#include "../Scene/SceneManager.hpp"
 #include "Types.hpp"
 
 class Coordinator {
 public:
-    void Init();
+    Coordinator();
 
     Entity CreateEntity();
 
@@ -22,8 +22,8 @@ public:
     }
 
     template<typename T>
-    void AddComponent(Entity entity, T component) {
-        _componentManager->addComponent<T>(entity, component);
+    void AddComponent(Entity entity, T&& component) {
+        _componentManager->addComponent<T>(entity, std::forward<T>(component));
         auto signature = _entityManager->GetSignature(entity);
         signature.set(_componentManager->getComponentType<T>(), true);
         _entityManager->SetSignature(entity, signature);
@@ -45,6 +45,11 @@ public:
     }
 
     template<typename T>
+    bool HasComponent(Entity entity) {
+        return _componentManager->hasComponent<T>(entity);
+    }
+
+    template<typename T>
     ComponentType GetComponentType() {
         return _componentManager->getComponentType<T>();
     }
@@ -58,6 +63,8 @@ public:
     void SetSystemSignature(Signature signature) {
         _systemManager->setSignature<T>(signature);
     }
+
+    void Update(float dt);
 
 private:
     std::unique_ptr<ComponentManager> _componentManager;

@@ -6,7 +6,7 @@
 #include <typeindex>
 #include <cassert>
 #include "System.hpp"
-#include "Types.hpp"
+#include "../Core/Types.hpp"
 
 class SystemManager {
 public:

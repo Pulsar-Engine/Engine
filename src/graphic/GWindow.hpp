@@ -10,19 +10,22 @@
 
     #include <chrono>
     #include <atomic>
+    #include <thread>
 
     #include "backend/vulkan/Primitive.hpp"
     #include "backend/vulkan/Buffer.hpp"
     #include "../modules/Camera.hpp"
 
 class Instance;
+class Coordinator;
+
 class GWindow : public Primitive<GLFWwindow *> {
     public:
         GWindow() = default;
         GWindow(const int width, const int height, const char *title, bool fromEditor);
         ~GWindow();
         GWindow &operator=(const GWindow &rvalue);
-        void loop(Instance &instance);
+        void loop(Instance &instance, Coordinator &coordinator);
         void drawFrame(Instance &instance);
         void callbackResize(GLFWwindow *window, int width, int height);
         void updateUniformBuffer(Buffer &uniformBuffer);
@@ -31,6 +34,7 @@ class GWindow : public Primitive<GLFWwindow *> {
         void togglePause();
         void toggleShow();
         void onMouseMove(double xpos, double ypos);
+        std::atomic<bool> &isClosed();
     protected:
     private:
         static GWindow *_instance;
@@ -39,7 +43,7 @@ class GWindow : public Primitive<GLFWwindow *> {
         const char *_title;
         uint32_t _currentFrame;
         bool _framebufferResized;
-        std::atomic<bool> _finished;
+        std::atomic<bool> _closed;
         std::atomic<bool> _paused;
         Camera _camera;
 };

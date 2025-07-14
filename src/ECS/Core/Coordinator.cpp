@@ -1,6 +1,6 @@
 #include "Coordinator.hpp"
 
-void Coordinator::Init() {
+Coordinator::Coordinator() {
     _entityManager = std::make_unique<EntityManager>();
     _componentManager = std::make_unique<ComponentManager>();
     _systemManager = std::make_unique<SystemManager>();
@@ -14,4 +14,8 @@ void Coordinator::DestroyEntity(Entity entity) {
     _entityManager->DestroyEntity(entity);
     _componentManager->entityDestroyed(entity);
     _systemManager->entityDestroyed(entity);
+}
+
+void Coordinator::Update(float dt) {
+    _systemManager->updateAllSystems(dt, *this);
 }
