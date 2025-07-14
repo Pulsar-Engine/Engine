@@ -19,7 +19,7 @@ class MeshManager {
         
         size_t getMeshCount() const;
         Mesh* getMesh(size_t index);
-        const std::vector<std::unique_ptr<Mesh>>& getAllMeshes() const;
+        std::vector<std::unique_ptr<Mesh>>& getAllMeshes();
         
         void updateUniformBuffers(uint32_t currentFrame, const glm::mat4& view, const glm::mat4& proj);
         void bindAndDraw(VkCommandBuffer commandBuffer, uint32_t currentFrame);

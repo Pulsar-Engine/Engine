@@ -79,11 +79,9 @@ class Instance : public Primitive<VkInstance> {
         
         void recreateSwapchain();
         void cleanupSwapchain();
-        void createBuffers();
         void createCommandBuffers();
         uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
         
-        // Mesh management
         MeshManager& getMeshManager();
         void addMesh(const char *modelPath, const char *texturePath);
         void addMesh(const char *modelPath, const char *texturePath, glm::vec3 position, glm::vec3 rotation = glm::vec3(0.0f), glm::vec3 scale = glm::vec3(1.0f));
@@ -105,8 +103,6 @@ class Instance : public Primitive<VkInstance> {
         std::unique_ptr<DescriptorSets> _descriptorSets;
         std::unique_ptr<TextureSampler> _textureSampler;
         std::unique_ptr<DepthResources> _depthResources;
-        
-        // Fallback variables for compatibility
         std::unique_ptr<Buffer> _vertexBuffer;
         std::unique_ptr<Buffer> _indexBuffer;
         std::unique_ptr<Buffer> _stagingBuffer;
@@ -115,8 +111,6 @@ class Instance : public Primitive<VkInstance> {
         std::vector<uint32_t> _indices;
         std::unique_ptr<Image> _image;
         std::unique_ptr<ImageView> _textureImageView;
-        
-        // Mesh management
         std::unique_ptr<MeshManager> _meshManager;
 };
 

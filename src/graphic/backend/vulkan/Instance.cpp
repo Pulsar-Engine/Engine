@@ -71,12 +71,6 @@ Instance::Instance(const char *title, bool fromEditor)
     _depthResources = std::make_unique<DepthResources>(*this, *_physicalDevice, *_swapchain);
     _frameBuffers = std::make_unique<FrameBuffers>(_graphicsPipeline, *_depthResources, _device, _imageViews, _swapchain->getExtent());
     _textureSampler = std::make_unique<TextureSampler>(_device, *_physicalDevice);
-    
-    try {
-        createBuffers();
-    } catch (const std::exception& e) {
-        std::cerr << "Error adding mesh: " << e.what() << std::endl;
-    }
 }
 
 VkBool32 Instance::debugCallback(
@@ -307,12 +301,4 @@ void Instance::addMesh(const char *modelPath, const char *texturePath)
 void Instance::addMesh(const char *modelPath, const char *texturePath, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale)
 {
     _meshManager->addMesh(*this, modelPath, texturePath, position, rotation, scale);
-}
-
-void Instance::createBuffers()
-{
-    if (_meshManager->getMeshCount() == 0) {
-        _meshManager->addMesh(*this, "models/viking_room.obj", "textures/viking_room.png", 
-                             glm::vec3(0.0f, 0.0f, 0.0f));
-    }
 }

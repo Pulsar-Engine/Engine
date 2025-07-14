@@ -49,7 +49,7 @@ Mesh* MeshManager::getMesh(size_t index)
     return nullptr;
 }
 
-const std::vector<std::unique_ptr<Mesh>>& MeshManager::getAllMeshes() const
+std::vector<std::unique_ptr<Mesh>>& MeshManager::getAllMeshes()
 {
     return _meshes;
 }
